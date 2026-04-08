@@ -6,8 +6,10 @@ import Link from "next/link";
 import Header from "../components/Header";
 import ProductGrid from "../components/ProductGrid";
 import ProductPanel from "../components/ProductPanel";
+import StyleDNACard from "../components/StyleDNACard";
 import { SkeletonGrid } from "../components/SkeletonCard";
 import { applyPreferences, fetchProducts } from "../lib/fetchProducts";
+import { STYLE_CATEGORY_MAP } from "../lib/styleDNA";
 import { loadStyleDNA, loadSavedIds, saveSavedIds } from "../lib/storage";
 
 export default function HomePage() {
@@ -15,7 +17,11 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [savedIds, setSavedIds] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [dna, setDNA] = useState({ stores: [], brands: [], vibes: [], colors: [], sizes: [] });
+  const [dna, setDNA] = useState({
+    stores: [], brands: [], vibes: [], colors: [], sizes: [],
+    fit: "", primaryStyle: null, secondaryStyle: null,
+    dnaLabel: null, dnaDescription: null,
+  });
 
   useEffect(() => {
     fetchProducts()
@@ -30,30 +36,47 @@ export default function HomePage() {
     saveSavedIds(savedIds);
   }, [savedIds]);
 
+  const toggleSave = (id) =>
+    setSavedIds((prev) =>
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+    );
+
+  const hasDNA = !!(dna.primaryStyle);
+
+  // Personalised products sorted by DNA
   const personalisedProducts = useMemo(
     () => applyPreferences(products, dna),
     [products, dna]
   );
+
+  // Trending = raw first 8 (not DNA-filtered)
   const trendingProducts = useMemo(() => products.slice(0, 8), [products]);
 
-  const hasDNA = (dna.vibes || []).length || (dna.brands || []).length || (dna.colors || []).length;
+  // "Because you like [PrimaryStyle]" — products matching primary style category
+  const becauseYouLike = useMemo(() => {
+    if (!dna.primaryStyle) return [];
+    const cats = STYLE_CATEGORY_MAP[dna.primaryStyle] || [];
+    return products.filter((p) => cats.includes(p.category)).slice(0, 8);
+  }, [products, dna.primaryStyle]);
 
-  const toggleSave = (id) => {
-    setSavedIds((prev) =>
-      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
-    );
-  };
+  // "Trending in your style" — products matching secondary style (or primary if no secondary)
+  const trendingInStyle = useMemo(() => {
+    const style = dna.secondaryStyle || dna.primaryStyle;
+    if (!style) return [];
+    const cats = STYLE_CATEGORY_MAP[style] || [];
+    return products.filter((p) => cats.includes(p.category)).slice(0, 4);
+  }, [products, dna.primaryStyle, dna.secondaryStyle]);
 
   return (
     <main>
       <Header savedCount={savedIds.length} />
 
-      {/* Hero */}
+      {/* ── Hero ──────────────────────────────────────────────────── */}
       <section className="container fade-in" style={{ paddingTop: 20 }}>
         <div style={{ position: "relative", overflow: "hidden", borderRadius: 2 }}>
           <Image
             src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=1600&q=80"
-            alt="IRELIA hero"
+            alt="IRELIA"
             width={1600}
             height={700}
             unoptimized
@@ -64,61 +87,74 @@ export default function HomePage() {
             style={{
               position: "absolute",
               inset: 0,
-              background: "linear-gradient(to right, rgba(0,0,0,0.45) 0%, transparent 60%)",
+              background: "linear-gradient(to right, rgba(0,0,0,0.52) 0%, transparent 65%)",
               display: "flex",
               flexDirection: "column",
               justifyContent: "flex-end",
-              padding: "28px 28px",
+              padding: "32px 32px",
             }}
           >
-            <h1 style={{ margin: 0, fontSize: 38, letterSpacing: "0.04em", color: "#fff", fontWeight: 700 }}>
-              Your Edit
+            <h1 style={{ margin: 0, fontSize: 40, fontWeight: 900, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+              {hasDNA ? `Your ${dna.dnaLabel} Edit` : "Your Edit"}
             </h1>
-            <p style={{ marginTop: 8, fontSize: 14, color: "rgba(255,255,255,0.85)", maxWidth: 360 }}>
-              Curated fashion discovery powered by real affiliate feeds and your Style DNA.
+            <p style={{ margin: "10px 0 0", fontSize: 14, color: "rgba(255,255,255,0.8)", maxWidth: 380, lineHeight: 1.5 }}>
+              {hasDNA
+                ? dna.dnaDescription || "Fashion discovery powered by your Style DNA."
+                : "AI-powered fashion discovery from real affiliate feeds."}
             </p>
-            <div style={{ marginTop: 18, display: "flex", gap: 10 }}>
+            <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
               <Link
                 href="/shop"
                 style={{
                   display: "inline-block",
                   background: "#fff",
                   color: "#111",
-                  padding: "11px 20px",
+                  padding: "12px 22px",
                   fontSize: 11,
                   textTransform: "uppercase",
                   letterSpacing: "0.1em",
-                  fontWeight: 600,
+                  fontWeight: 700,
+                  borderRadius: 2,
                 }}
               >
                 Shop now
               </Link>
-              <Link
-                href="/quiz"
-                style={{
-                  display: "inline-block",
-                  border: "1px solid rgba(255,255,255,0.7)",
-                  color: "#fff",
-                  padding: "11px 20px",
-                  fontSize: 11,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                }}
-              >
-                Style DNA quiz
-              </Link>
+              {!hasDNA && (
+                <Link
+                  href="/quiz"
+                  style={{
+                    display: "inline-block",
+                    border: "1px solid rgba(255,255,255,0.65)",
+                    color: "#fff",
+                    padding: "12px 22px",
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    borderRadius: 2,
+                  }}
+                >
+                  Discover your style →
+                </Link>
+              )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Category quick-links */}
-      <section className="container" style={{ paddingTop: 22 }}>
+      {/* ── Style DNA card (shown when set) ───────────────────────── */}
+      {hasDNA && (
+        <section className="container fade-in" style={{ paddingTop: 20 }}>
+          <StyleDNACard dna={dna} variant="inline" />
+        </section>
+      )}
+
+      {/* ── Category quick-links ──────────────────────────────────── */}
+      <section className="container" style={{ paddingTop: 20 }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {["Women", "Men", "Shoes", "Accessories", "Dresses", "Bags"].map((category) => (
+          {["Women", "Men", "Shoes", "Accessories", "Dresses", "Bags"].map((cat) => (
             <Link
-              key={category}
-              href={`/shop?category=${encodeURIComponent(category)}`}
+              key={cat}
+              href={`/shop?category=${encodeURIComponent(cat)}`}
               style={{
                 border: "1px solid var(--border)",
                 padding: "9px 14px",
@@ -129,14 +165,43 @@ export default function HomePage() {
                 transition: "border-color 0.15s",
               }}
             >
-              {category}
+              {cat}
             </Link>
           ))}
         </div>
       </section>
 
-      {/* Trending now */}
-      <section className="container" style={{ paddingTop: 34 }}>
+      {/* ── Because you like [Style] ──────────────────────────────── */}
+      {hasDNA && becauseYouLike.length > 0 && (
+        <section className="container" style={{ paddingTop: 36 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16 }}>
+            <h2 style={{ margin: 0, fontSize: 14, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              Because you like {dna.primaryStyle}
+            </h2>
+            <Link
+              href="/shop"
+              style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}
+            >
+              See all →
+            </Link>
+          </div>
+          {loading ? (
+            <SkeletonGrid count={8} />
+          ) : (
+            <ProductGrid
+              products={becauseYouLike}
+              savedIds={savedIds}
+              onToggleSave={toggleSave}
+              onOpenPanel={setSelectedProduct}
+              hasMore={false}
+              totalCount={becauseYouLike.length}
+            />
+          )}
+        </section>
+      )}
+
+      {/* ── Trending now (always visible) ────────────────────────── */}
+      <section className="container" style={{ paddingTop: 36 }}>
         <h2 style={{ margin: "0 0 16px", fontSize: 14, textTransform: "uppercase", letterSpacing: "0.1em" }}>
           Trending now
         </h2>
@@ -154,9 +219,9 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Shop by category editorial */}
+      {/* ── Shop by category editorial ────────────────────────────── */}
       <section className="container" style={{ paddingTop: 40 }}>
-        <h2 style={{ margin: "0 0 16px", fontSize: 14, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+        <h2 style={{ margin: "0 0 14px", fontSize: 14, textTransform: "uppercase", letterSpacing: "0.1em" }}>
           Shop by category
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
@@ -176,26 +241,19 @@ export default function HomePage() {
                 width={900}
                 height={600}
                 unoptimized
-                style={{
-                  width: "100%",
-                  height: "auto",
-                  aspectRatio: "4/3",
-                  objectFit: "cover",
-                  display: "block",
-                  transition: "transform 0.35s ease",
-                }}
+                style={{ width: "100%", height: "auto", aspectRatio: "4/3", objectFit: "cover", display: "block" }}
               />
               <div
                 style={{
                   position: "absolute",
                   inset: 0,
-                  background: "linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 50%)",
+                  background: "linear-gradient(to top, rgba(0,0,0,0.42) 0%, transparent 55%)",
                   display: "flex",
                   alignItems: "flex-end",
-                  padding: "14px 14px",
+                  padding: "14px",
                 }}
               >
-                <span style={{ color: "#fff", fontSize: 13, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>
+                <span style={{ color: "#fff", fontSize: 13, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>
                   {entry.name}
                 </span>
               </div>
@@ -204,24 +262,42 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Personalised for you */}
-      <section className="container" style={{ paddingTop: 40, paddingBottom: 50 }}>
+      {/* ── Trending in your style (secondary style) ──────────────── */}
+      {hasDNA && trendingInStyle.length > 0 && (
+        <section className="container" style={{ paddingTop: 40 }}>
+          <h2 style={{ margin: "0 0 6px", fontSize: 14, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            Trending in your style
+          </h2>
+          <p style={{ margin: "0 0 18px", fontSize: 13, color: "var(--muted)" }}>
+            Inspired by your {dna.dnaLabel} DNA.
+          </p>
+          {loading ? (
+            <SkeletonGrid count={4} />
+          ) : (
+            <ProductGrid
+              products={trendingInStyle}
+              savedIds={savedIds}
+              onToggleSave={toggleSave}
+              onOpenPanel={setSelectedProduct}
+              hasMore={false}
+              totalCount={trendingInStyle.length}
+            />
+          )}
+        </section>
+      )}
+
+      {/* ── Personalised for you / New in ────────────────────────── */}
+      <section className="container" style={{ paddingTop: 40, paddingBottom: 56 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16 }}>
           <h2 style={{ margin: 0, fontSize: 14, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-            {hasDNA ? "Picked for you" : "New in"}
+            {hasDNA ? "Inspired by your style" : "New in"}
           </h2>
           {!hasDNA && (
             <Link
               href="/quiz"
-              style={{
-                fontSize: 11,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: "var(--muted)",
-                textDecoration: "underline",
-              }}
+              style={{ fontSize: 11, color: "var(--muted)", textDecoration: "underline", letterSpacing: "0.06em" }}
             >
-              Personalise →
+              Personalise your feed →
             </Link>
           )}
         </div>

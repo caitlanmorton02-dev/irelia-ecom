@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import StyleDNAChips from "./StyleDNAChips";
 import { addRecentlyViewed } from "../lib/storage";
-import { useEffect, useState } from "react";
+import { getProductMatchReason } from "../lib/styleDNA";
 
 export default function ProductPanel({ product, saved, onClose, onToggleSave, dna }) {
   const [removedChips, setRemovedChips] = useState(new Set());
@@ -17,15 +18,18 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
 
   if (!product) return null;
 
-  const hasActiveDNA = dna && (
+  const matchReason = getProductMatchReason(product, dna);
+  const hasDNA = dna && (
     (dna.vibes || []).length ||
     (dna.brands || []).length ||
     (dna.colors || []).length ||
-    (dna.stores || []).length
+    (dna.stores || []).length ||
+    dna.primaryStyle
   );
 
   return (
     <>
+      {/* Backdrop */}
       <div
         onClick={onClose}
         style={{
@@ -34,11 +38,13 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
           background: "rgba(0,0,0,0.4)",
           zIndex: 70,
           backdropFilter: "blur(2px)",
+          WebkitBackdropFilter: "blur(2px)",
         }}
       />
 
       <aside className="panel-shell">
-        {/* Header */}
+
+        {/* ── Header ──────────────────────────────────────────────── */}
         <div
           style={{
             borderBottom: "1px solid var(--border)",
@@ -52,14 +58,14 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
             zIndex: 5,
           }}
         >
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <span
               style={{
                 fontSize: 10,
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
                 border: "1px solid var(--border)",
-                padding: "3px 7px",
+                padding: "3px 8px",
                 borderRadius: 2,
                 color: "var(--muted)",
               }}
@@ -67,7 +73,7 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
               {product.category}
             </span>
             {product.color && (
-              <span style={{ fontSize: 12, color: "var(--muted)" }}>{product.color}</span>
+              <span style={{ fontSize: 11, color: "var(--muted)" }}>{product.color}</span>
             )}
           </div>
           <button
@@ -82,7 +88,7 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
               borderRadius: 2,
               display: "grid",
               placeItems: "center",
-              fontSize: 16,
+              fontSize: 14,
               color: "var(--muted)",
             }}
           >
@@ -90,26 +96,26 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
           </button>
         </div>
 
-        {/* Image */}
-        <div style={{ position: "relative", overflow: "hidden" }}>
-          <Image
-            src={product.image}
-            alt={product.title}
-            width={800}
-            height={1000}
-            unoptimized
-            style={{
-              width: "100%",
-              height: "auto",
-              aspectRatio: "4/5",
-              objectFit: "cover",
-              display: "block",
-            }}
-          />
-        </div>
+        {/* ── Product image ────────────────────────────────────────── */}
+        <Image
+          src={product.image}
+          alt={product.title}
+          width={800}
+          height={1000}
+          unoptimized
+          style={{
+            width: "100%",
+            height: "auto",
+            aspectRatio: "4/5",
+            objectFit: "cover",
+            display: "block",
+          }}
+        />
 
-        {/* Details */}
-        <div style={{ padding: "16px 16px 100px" }}>
+        {/* ── Details ──────────────────────────────────────────────── */}
+        <div style={{ padding: "16px 16px 110px" }}>
+
+          {/* Price + retailer */}
           <div
             style={{
               display: "flex",
@@ -119,31 +125,96 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
               marginBottom: 6,
             }}
           >
-            <strong style={{ fontSize: 20, letterSpacing: "0.01em" }}>{product.price}</strong>
-            <div
+            <strong style={{ fontSize: 22, letterSpacing: "-0.01em" }}>{product.price}</strong>
+            <span
               style={{
-                fontSize: 11,
+                fontSize: 10,
                 color: "var(--muted)",
                 textTransform: "uppercase",
-                letterSpacing: "0.07em",
-                textAlign: "right",
-                flexShrink: 0,
+                letterSpacing: "0.09em",
+                paddingTop: 4,
               }}
             >
               {product.retailer}
-            </div>
+            </span>
           </div>
 
-          <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 4, lineHeight: 1.3 }}>
+          {/* Title + brand */}
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3, lineHeight: 1.3 }}>
             {product.title}
           </div>
           <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 18 }}>
             {product.brand}
           </div>
 
-          {/* Style DNA quick-filter chips */}
-          {hasActiveDNA && (
-            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, marginBottom: 4 }}>
+          {/* ── Matches your style ─────────────────────────────────── */}
+          {matchReason && (
+            <div
+              style={{
+                background: "#f5f5f0",
+                borderRadius: 2,
+                padding: "10px 14px",
+                marginBottom: 14,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 14 }}>✦</span>
+              <div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    color: "var(--muted)",
+                    marginBottom: 2,
+                  }}
+                >
+                  Matches your style
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 500 }}>{matchReason}</div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Why we recommend this (DNA-based) ─────────────────── */}
+          {dna?.primaryStyle && !matchReason && (
+            <div
+              style={{
+                border: "1px solid var(--border)",
+                borderRadius: 2,
+                padding: "10px 14px",
+                marginBottom: 14,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 14, color: "var(--muted)" }}>◈</span>
+              <div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    color: "var(--muted)",
+                    marginBottom: 2,
+                  }}
+                >
+                  Why we picked this
+                </div>
+                <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                  Curated for your {dna.primaryStyle} aesthetic
+                  {dna.secondaryStyle ? ` and ${dna.secondaryStyle} side` : ""}.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Quick DNA filter chips ─────────────────────────────── */}
+          {hasDNA && (
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14 }}>
               <StyleDNAChips
                 dna={dna}
                 removedChips={removedChips}
@@ -153,7 +224,7 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
           )}
         </div>
 
-        {/* CTA */}
+        {/* ── CTA bar ──────────────────────────────────────────────── */}
         <div className="panel-cta">
           <a
             href={product.productUrl}
@@ -169,7 +240,8 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
               textTransform: "uppercase",
               fontSize: 11,
               letterSpacing: "0.1em",
-              fontWeight: 600,
+              fontWeight: 700,
+              display: "block",
             }}
           >
             Shop {product.retailer}
@@ -178,7 +250,7 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
             onClick={() => onToggleSave(product.id)}
             aria-label={saved ? "Remove from Your Edit" : "Save to Your Edit"}
             style={{
-              width: 48,
+              width: 50,
               border: "1px solid var(--border)",
               borderRadius: 2,
               background: saved ? "#111" : "#fff",
@@ -186,11 +258,13 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
               fontSize: 18,
               cursor: "pointer",
               transition: "background 0.18s, color 0.18s",
+              flexShrink: 0,
             }}
           >
             {saved ? "♥" : "♡"}
           </button>
         </div>
+
       </aside>
     </>
   );

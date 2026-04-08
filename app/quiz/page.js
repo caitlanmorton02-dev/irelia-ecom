@@ -6,6 +6,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Header from "../../components/Header";
 import Toast from "../../components/Toast";
+import {
+  scoreQuizAnswers,
+  generateDNALabel,
+  generateDNADescription,
+  STYLE_TYPES,
+  STYLE_DESCRIPTIONS,
+} from "../../lib/styleDNA";
 import { saveStyleDNA, loadSavedIds } from "../../lib/storage";
 
 // ─── Quiz data ────────────────────────────────────────────────────────────────
@@ -33,6 +40,13 @@ const OUTFIT_OPTIONS = [
     vibes: ["Luxe"],
   },
   {
+    id: "o-classic",
+    label: "Timeless Classic",
+    desc: "Tailored, structured, enduring",
+    image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&q=80",
+    vibes: ["Classic"],
+  },
+  {
     id: "o-sporty",
     label: "Sporty Chic",
     desc: "Performance meets fashion",
@@ -47,11 +61,18 @@ const OUTFIT_OPTIONS = [
     vibes: ["Vintage"],
   },
   {
-    id: "o-statement",
-    label: "Statement Piece",
-    desc: "Bold, editorial, expressive",
+    id: "o-trend",
+    label: "Trend Setter",
+    desc: "Bold prints, statement looks",
     image: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=500&q=80",
-    vibes: ["Statement", "Luxe"],
+    vibes: ["Trend-led"],
+  },
+  {
+    id: "o-quiet-luxe",
+    label: "Quiet Luxury",
+    desc: "Understated premium, no logos",
+    image: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500&q=80",
+    vibes: ["Luxe", "Minimal"],
   },
 ];
 
@@ -77,10 +98,34 @@ const COLOR_OPTIONS = [
 ];
 
 const FIT_OPTIONS = [
-  { id: "oversized", label: "Oversized", desc: "Roomy, relaxed silhouettes", icon: "◈" },
-  { id: "tailored", label: "Tailored", desc: "Sharp, precise, structured", icon: "◇" },
-  { id: "relaxed", label: "Relaxed", desc: "Easy, effortless everyday", icon: "○" },
-  { id: "fitted", label: "Fitted", desc: "Close to the body, sleek", icon: "◆" },
+  {
+    id: "oversized",
+    label: "Oversized",
+    desc: "Roomy, relaxed silhouettes",
+    icon: "◈",
+    signals: ["Streetwear", "Vintage"],
+  },
+  {
+    id: "tailored",
+    label: "Tailored",
+    desc: "Sharp, precise, structured",
+    icon: "◇",
+    signals: ["Classic", "Luxe"],
+  },
+  {
+    id: "relaxed",
+    label: "Relaxed",
+    desc: "Easy, effortless everyday",
+    icon: "○",
+    signals: ["Minimal"],
+  },
+  {
+    id: "fitted",
+    label: "Fitted",
+    desc: "Close to the body, sleek",
+    icon: "◆",
+    signals: ["Trend-led", "Luxe"],
+  },
 ];
 
 const STORE_OPTIONS = [
@@ -90,38 +135,59 @@ const STORE_OPTIONS = [
 
 const TOTAL_STEPS = 5;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Step components ──────────────────────────────────────────────────────────
 
-function deriveVibes(outfitIds) {
-  const vibeCounts = {};
-  outfitIds.forEach((id) => {
-    const option = OUTFIT_OPTIONS.find((o) => o.id === id);
-    if (!option) return;
-    option.vibes.forEach((v) => {
-      vibeCounts[v] = (vibeCounts[v] || 0) + 1;
-    });
-  });
-  return Object.entries(vibeCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([vibe]) => vibe);
+function StepHeader({ step, title, subtitle }) {
+  return (
+    <div style={{ marginBottom: 28 }}>
+      <div
+        style={{
+          fontSize: 10,
+          textTransform: "uppercase",
+          letterSpacing: "0.15em",
+          color: "var(--muted)",
+          marginBottom: 8,
+        }}
+      >
+        Step {step} of {TOTAL_STEPS}
+      </div>
+      <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+        {title}
+      </h2>
+      <p style={{ margin: "10px 0 0", fontSize: 14, color: "var(--muted)", lineHeight: 1.6 }}>{subtitle}</p>
+    </div>
+  );
 }
 
-// ─── Step components ──────────────────────────────────────────────────────────
+function ProgressBar({ step }) {
+  return (
+    <div style={{ height: 3, background: "var(--border)", borderRadius: 2, marginBottom: 40, overflow: "hidden" }}>
+      <div
+        style={{
+          height: "100%",
+          width: `${(step / TOTAL_STEPS) * 100}%`,
+          background: "#111",
+          borderRadius: 2,
+          transition: "width 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        }}
+      />
+    </div>
+  );
+}
 
 function StepOutfits({ selected, onToggle }) {
   return (
     <div>
       <StepHeader
         step={1}
-        title="Pick outfits you love"
-        subtitle="Select as many as feel like you. No wrong answers."
+        title="Pick outfits that feel like you"
+        subtitle="Select all that resonate. Your choices map to your style DNA."
       />
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-          gap: 12,
+          gap: 10,
         }}
       >
         {OUTFIT_OPTIONS.map((option) => {
@@ -130,7 +196,6 @@ function StepOutfits({ selected, onToggle }) {
             <button
               key={option.id}
               onClick={() => onToggle(option.id)}
-              className={`quiz-option ${active ? "quiz-option--selected" : ""}`}
               style={{
                 background: "none",
                 border: `2px solid ${active ? "#111" : "transparent"}`,
@@ -138,6 +203,10 @@ function StepOutfits({ selected, onToggle }) {
                 cursor: "pointer",
                 textAlign: "left",
                 position: "relative",
+                borderRadius: 2,
+                overflow: "hidden",
+                transition: "border-color 0.18s, transform 0.18s",
+                transform: active ? "scale(0.97)" : "scale(1)",
               }}
             >
               <Image
@@ -146,20 +215,25 @@ function StepOutfits({ selected, onToggle }) {
                 width={500}
                 height={600}
                 unoptimized
-                style={{ width: "100%", height: "auto", aspectRatio: "5/6", objectFit: "cover", display: "block" }}
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  aspectRatio: "5/6",
+                  objectFit: "cover",
+                  display: "block",
+                }}
               />
               <div
                 style={{
                   position: "absolute",
                   inset: 0,
                   background: active
-                    ? "rgba(0,0,0,0.15)"
-                    : "linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 55%)",
+                    ? "rgba(0,0,0,0.12)"
+                    : "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 55%)",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "flex-end",
-                  padding: "12px 12px",
-                  transition: "background 0.2s",
+                  padding: "14px",
                 }}
               >
                 {active && (
@@ -181,10 +255,18 @@ function StepOutfits({ selected, onToggle }) {
                     ✓
                   </div>
                 )}
-                <span style={{ color: "#fff", fontSize: 13, fontWeight: 600, letterSpacing: "0.03em" }}>
+                <span
+                  style={{
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    letterSpacing: "0.03em",
+                    display: "block",
+                  }}
+                >
                   {option.label}
                 </span>
-                <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 11, marginTop: 2 }}>
+                <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, marginTop: 2 }}>
                   {option.desc}
                 </span>
               </div>
@@ -192,6 +274,11 @@ function StepOutfits({ selected, onToggle }) {
           );
         })}
       </div>
+      {selected.length > 0 && (
+        <p style={{ marginTop: 14, fontSize: 12, color: "var(--muted)" }}>
+          {selected.length} selected
+        </p>
+      )}
     </div>
   );
 }
@@ -201,8 +288,8 @@ function StepBrands({ selected, onToggle }) {
     <div>
       <StepHeader
         step={2}
-        title="Which brands do you shop?"
-        subtitle="Pick your favourites. We'll prioritise them in your feed."
+        title="Which brands do you love?"
+        subtitle="Pick your favourites — we'll use this to find your style matches."
       />
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {BRAND_OPTIONS.map((brand) => {
@@ -217,7 +304,7 @@ function StepBrands({ selected, onToggle }) {
                 color: active ? "#fff" : "#111",
                 borderRadius: 2,
                 fontSize: 13,
-                padding: "10px 16px",
+                padding: "11px 18px",
                 cursor: "pointer",
                 transition: "all 0.15s",
                 fontWeight: active ? 600 : 400,
@@ -240,7 +327,7 @@ function StepColors({ selected, onToggle }) {
         title="Your colour palette"
         subtitle="Pick the colours you reach for most."
       />
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
         {COLOR_OPTIONS.map((color) => {
           const active = selected.includes(color.name);
           return (
@@ -252,7 +339,7 @@ function StepColors({ selected, onToggle }) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: 6,
+                gap: 7,
                 border: "none",
                 background: "none",
                 cursor: "pointer",
@@ -261,17 +348,26 @@ function StepColors({ selected, onToggle }) {
             >
               <div
                 style={{
-                  width: 48,
-                  height: 48,
+                  width: 52,
+                  height: 52,
                   borderRadius: "50%",
                   background: color.hex,
                   border: active ? "3px solid #111" : "2px solid var(--border)",
-                  transition: "border 0.15s, transform 0.15s",
-                  transform: active ? "scale(1.1)" : "scale(1)",
-                  boxShadow: active ? "0 0 0 2px #fff inset" : "none",
+                  transition: "all 0.15s",
+                  transform: active ? "scale(1.12)" : "scale(1)",
+                  boxShadow: active ? "0 0 0 3px #fff inset" : "none",
                 }}
               />
-              <span style={{ fontSize: 10, color: active ? "#111" : "var(--muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  color: active ? "#111" : "var(--muted)",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  fontWeight: active ? 600 : 400,
+                  transition: "all 0.15s",
+                }}
+              >
                 {color.name}
               </span>
             </button>
@@ -290,7 +386,9 @@ function StepFit({ selected, onSelect }) {
         title="How do you like your clothes to fit?"
         subtitle="Pick the silhouette that feels most like you."
       />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}
+      >
         {FIT_OPTIONS.map((option) => {
           const active = selected === option.id;
           return (
@@ -302,15 +400,37 @@ function StepFit({ selected, onSelect }) {
                 background: active ? "#111" : "#fff",
                 color: active ? "#fff" : "#111",
                 borderRadius: 2,
-                padding: "22px 18px",
+                padding: "22px 20px",
                 cursor: "pointer",
                 textAlign: "left",
                 transition: "all 0.18s",
               }}
             >
-              <div style={{ fontSize: 24, marginBottom: 10 }}>{option.icon}</div>
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{option.label}</div>
-              <div style={{ fontSize: 12, opacity: active ? 0.7 : 0.55 }}>{option.desc}</div>
+              <div style={{ fontSize: 26, marginBottom: 12 }}>{option.icon}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 5 }}>{option.label}</div>
+              <div style={{ fontSize: 12, opacity: active ? 0.65 : 0.5, lineHeight: 1.4 }}>
+                {option.desc}
+              </div>
+              {active && (
+                <div style={{ marginTop: 12, display: "flex", gap: 5, flexWrap: "wrap" }}>
+                  {option.signals.map((s) => (
+                    <span
+                      key={s}
+                      style={{
+                        fontSize: 9,
+                        border: "1px solid rgba(255,255,255,0.4)",
+                        borderRadius: 10,
+                        padding: "2px 7px",
+                        opacity: 0.7,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              )}
             </button>
           );
         })}
@@ -340,7 +460,7 @@ function StepStores({ selected, onToggle }) {
                 color: active ? "#fff" : "#111",
                 borderRadius: 2,
                 fontSize: 13,
-                padding: "10px 16px",
+                padding: "11px 18px",
                 cursor: "pointer",
                 transition: "all 0.15s",
                 fontWeight: active ? 600 : 400,
@@ -355,38 +475,27 @@ function StepStores({ selected, onToggle }) {
   );
 }
 
-function StepHeader({ step, title, subtitle }) {
-  return (
-    <div style={{ marginBottom: 28 }}>
-      <div
-        style={{
-          fontSize: 10,
-          textTransform: "uppercase",
-          letterSpacing: "0.15em",
-          color: "var(--muted)",
-          marginBottom: 8,
-        }}
-      >
-        Step {step} of {TOTAL_STEPS}
-      </div>
-      <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: "-0.01em" }}>{title}</h2>
-      <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--muted)", lineHeight: 1.5 }}>{subtitle}</p>
-    </div>
-  );
-}
+// ─── Result preview ───────────────────────────────────────────────────────────
 
-function ProgressBar({ step }) {
+function ResultPreview({ primary, secondary, description }) {
+  if (!primary) return null;
   return (
-    <div style={{ height: 3, background: "var(--border)", borderRadius: 2, marginBottom: 36, overflow: "hidden" }}>
-      <div
-        style={{
-          height: "100%",
-          width: `${(step / TOTAL_STEPS) * 100}%`,
-          background: "#111",
-          borderRadius: 2,
-          transition: "width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-        }}
-      />
+    <div
+      style={{
+        marginTop: 28,
+        padding: "20px 22px",
+        background: "#f5f5f0",
+        borderRadius: 2,
+        borderLeft: "3px solid #111",
+      }}
+    >
+      <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--muted)", marginBottom: 6 }}>
+        Your Style DNA preview
+      </div>
+      <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6, letterSpacing: "-0.01em" }}>
+        {secondary ? `${primary} ${secondary}` : primary}
+      </div>
+      <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>{description}</div>
     </div>
   );
 }
@@ -398,19 +507,33 @@ export default function QuizPage() {
   const [step, setStep] = useState(1);
   const [toast, setToast] = useState(false);
 
+  // Answers
   const [outfits, setOutfits] = useState([]);
   const [brands, setBrands] = useState([]);
   const [colors, setColors] = useState([]);
   const [fit, setFit] = useState("");
   const [stores, setStores] = useState([]);
 
+  // Live score preview (computed on step 5)
+  const [preview, setPreview] = useState(null);
+
   const savedCount = typeof window !== "undefined" ? loadSavedIds().length : 0;
 
   const toggleItem = (setter) => (value) => {
-    setter((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
+    setter((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
   };
 
   const handleNext = () => {
+    if (step === 4) {
+      // Compute preview before showing step 5
+      const vibes = outfits.flatMap(
+        (id) => OUTFIT_OPTIONS.find((o) => o.id === id)?.vibes || []
+      );
+      const { primary, secondary } = scoreQuizAnswers({ vibes, brands, colors, fit, stores });
+      setPreview({ primary, secondary });
+    }
     if (step < TOTAL_STEPS) {
       setStep((s) => s + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -427,13 +550,28 @@ export default function QuizPage() {
   };
 
   const handleFinish = () => {
-    const vibes = deriveVibes(outfits);
-    const dna = { vibes, brands, colors, stores, sizes: [], fit };
-    saveStyleDNA(dna);
+    const vibes = outfits.flatMap(
+      (id) => OUTFIT_OPTIONS.find((o) => o.id === id)?.vibes || []
+    );
+    const { primary, secondary } = scoreQuizAnswers({ vibes, brands, colors, fit, stores });
+    const dnaLabel = generateDNALabel(primary, secondary);
+    const dnaDescription = generateDNADescription(primary, secondary);
+
+    saveStyleDNA({
+      stores,
+      brands,
+      vibes: [...new Set(vibes)],
+      colors,
+      sizes: [],
+      fit,
+      primaryStyle: primary,
+      secondaryStyle: secondary,
+      dnaLabel,
+      dnaDescription,
+    });
+
     setToast(true);
-    setTimeout(() => {
-      router.push("/shop");
-    }, 1600);
+    setTimeout(() => router.push("/shop"), 1800);
   };
 
   const canProceed =
@@ -443,36 +581,34 @@ export default function QuizPage() {
       ? brands.length > 0
       : step === 3
       ? colors.length > 0
-      : step === 4
-      ? true // fit is optional
-      : step === 5
-      ? stores.length > 0
-      : true;
+      : true; // fit (step 4) and stores (step 5) are soft-required
 
   return (
     <main>
       <Header savedCount={savedCount} />
 
-      <section className="container fade-in" style={{ paddingTop: 30, paddingBottom: 60, maxWidth: 860 }}>
-        {/* Title */}
-        <div style={{ marginBottom: 6 }}>
-          <h1
+      <section
+        className="container fade-in"
+        style={{ paddingTop: 32, paddingBottom: 72, maxWidth: 900 }}
+      >
+        {/* Eyebrow */}
+        <div style={{ marginBottom: 8 }}>
+          <span
             style={{
-              margin: 0,
-              fontSize: 13,
+              fontSize: 11,
               textTransform: "uppercase",
               letterSpacing: "0.14em",
               color: "var(--muted)",
             }}
           >
             Style DNA Quiz
-          </h1>
+          </span>
         </div>
 
         <ProgressBar step={step} />
 
-        {/* Steps */}
-        <div className="fade-in" key={step}>
+        {/* Step content */}
+        <div key={step} className="fade-in">
           {step === 1 && (
             <StepOutfits selected={outfits} onToggle={toggleItem(setOutfits)} />
           )}
@@ -486,7 +622,16 @@ export default function QuizPage() {
             <StepFit selected={fit} onSelect={setFit} />
           )}
           {step === 5 && (
-            <StepStores selected={stores} onToggle={toggleItem(setStores)} />
+            <>
+              <StepStores selected={stores} onToggle={toggleItem(setStores)} />
+              {preview && (
+                <ResultPreview
+                  primary={preview.primary}
+                  secondary={preview.secondary}
+                  description={generateDNADescription(preview.primary, preview.secondary)}
+                />
+              )}
+            </>
           )}
         </div>
 
@@ -496,7 +641,7 @@ export default function QuizPage() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginTop: 36,
+            marginTop: 40,
             paddingTop: 24,
             borderTop: "1px solid var(--border)",
           }}
@@ -512,29 +657,30 @@ export default function QuizPage() {
               textTransform: "uppercase",
               letterSpacing: "0.08em",
               cursor: step === 1 ? "default" : "pointer",
-              opacity: step === 1 ? 0.3 : 1,
+              opacity: step === 1 ? 0.25 : 1,
               borderRadius: 2,
+              transition: "opacity 0.15s",
             }}
           >
             ← Back
           </button>
 
-          <div style={{ fontSize: 12, color: "var(--muted)" }}>
+          <span style={{ fontSize: 12, color: "var(--muted)" }}>
             {step} / {TOTAL_STEPS}
-          </div>
+          </span>
 
           <button
             onClick={handleNext}
             disabled={!canProceed}
             style={{
-              background: canProceed ? "#111" : "#ccc",
+              background: canProceed ? "#111" : "#d0d0d0",
               color: "#fff",
               border: 0,
               padding: "12px 28px",
               fontSize: 12,
               textTransform: "uppercase",
               letterSpacing: "0.1em",
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: canProceed ? "pointer" : "default",
               borderRadius: 2,
               transition: "background 0.2s",
@@ -544,18 +690,21 @@ export default function QuizPage() {
           </button>
         </div>
 
-        {/* Skip */}
-        <div style={{ textAlign: "center", marginTop: 16 }}>
+        <div style={{ textAlign: "center", marginTop: 18 }}>
           <Link
             href="/shop"
-            style={{ fontSize: 12, color: "var(--muted)", textDecoration: "underline" }}
+            style={{
+              fontSize: 12,
+              color: "var(--muted)",
+              textDecoration: "underline",
+            }}
           >
-            Skip quiz and browse
+            Skip and browse
           </Link>
         </div>
       </section>
 
-      <Toast message="Style DNA saved ✨ Taking you to the shop..." visible={toast} />
+      <Toast message="Style DNA created ✨ Taking you to the shop..." visible={toast} />
     </main>
   );
 }
