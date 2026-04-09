@@ -21,8 +21,9 @@ import {
   loadAuralisDNA,
   removeAuralisDNA,
 } from "../../lib/dna";
-import { generateDNADescription, STYLE_CATEGORY_MAP } from "../../lib/styleDNA";
-import { applyPreferences, fetchProducts } from "../../lib/fetchProducts";
+import { generateDNADescription } from "../../lib/styleDNA";
+import { fetchProducts } from "../../lib/fetchProducts";
+import { processProducts } from "../../lib/processProducts";
 import { loadSavedIds, saveSavedIds, loadStyleDNA } from "../../lib/storage";
 
 // ─── Step 1: Style vibe image grid ───────────────────────────────────────────
@@ -563,26 +564,15 @@ function ResultView({ dna, onRetake }) {
     if (isAdding) showToast("Saved to your edit ♥");
   };
 
-  // Hard-filter: must match at least one selected brand, colour, or primary style category
-  const curated = useMemo(() => {
-    if (!products.length) return [];
-    const filterBrands = dna.filters?.brands?.length ? dna.filters.brands : (dna.brands || []);
-    const filterColours = dna.filters?.colours?.length ? dna.filters.colours : (dna.colors || []);
-    const styleCats = dna.primaryStyle ? (STYLE_CATEGORY_MAP[dna.primaryStyle] || []) : [];
-    const hasFilters = filterBrands.length || filterColours.length || styleCats.length;
-
-    let pool = products;
-    if (hasFilters) {
-      const filtered = products.filter(
-        (p) =>
-          (filterBrands.length && filterBrands.includes(p.brand)) ||
-          (filterColours.length && filterColours.includes(p.color)) ||
-          (styleCats.length && styleCats.includes(p.category))
-      );
-      pool = filtered.length ? filtered : products;
-    }
-    return applyPreferences(pool, dna).slice(0, 30);
-  }, [products, dna]);
+  // Curated feed: hard-filter by DNA match first, then score + sort, limit 30
+  const curated = useMemo(
+    () =>
+      processProducts(products, dna, {
+        hardFilterByDNA: true,
+        limit: 30,
+      }),
+    [products, dna]
+  );
 
   const effectiveDNA = baseDNA
     ? {

@@ -5,10 +5,11 @@ import Header from "../../components/Header";
 import SavedEdit from "../../components/SavedEdit";
 import ProductPanel from "../../components/ProductPanel";
 import BoardsSection from "../../components/BoardsSection";
-import { applyPreferences, fetchProducts } from "../../lib/fetchProducts";
+import { fetchProducts } from "../../lib/fetchProducts";
+import { processProducts } from "../../lib/processProducts";
 import Toast from "../../components/Toast";
 import { loadSavedIds, saveSavedIds, loadStyleDNA } from "../../lib/storage";
-import { loadBoards } from "../../lib/dna";
+import { loadBoards, loadAuralisDNA, mergeWithAuralisDNA } from "../../lib/dna";
 
 export default function EditPage() {
   const [products, setProducts] = useState([]);
@@ -24,7 +25,10 @@ export default function EditPage() {
   useEffect(() => {
     fetchProducts().then(setProducts).catch(() => setProducts([]));
     setSavedIds(loadSavedIds());
-    setDNA(loadStyleDNA());
+    // Edit always uses the fullest DNA picture — merge both sources
+    const base = loadStyleDNA();
+    const auralis = loadAuralisDNA();
+    setDNA(mergeWithAuralisDNA(base, auralis));
     setBoards(loadBoards());
   }, []);
 
@@ -38,9 +42,9 @@ export default function EditPage() {
     [products, savedIds]
   );
 
-  // All products sorted by DNA for "More like your style" / "Trending for style"
+  // All products scored + sorted by DNA — Edit always uses full DNA, no filters
   const sortedProducts = useMemo(
-    () => applyPreferences(products, dna),
+    () => processProducts(products, dna),
     [products, dna]
   );
 
