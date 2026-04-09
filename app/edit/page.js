@@ -147,6 +147,7 @@ export default function EditPage() {
             products={products}
             dna={dna}
             savedIds={savedIds}
+            savedProducts={savedProducts}
             onToggleSave={toggleSave}
             onBoardsChange={setBoards}
             onOpenPanel={setSelectedProduct}

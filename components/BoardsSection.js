@@ -3,7 +3,12 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import ProductGrid from "./ProductGrid";
-import { createBoard, deleteBoard, removeProductFromBoard } from "../lib/dna";
+import {
+  createBoard,
+  deleteBoard,
+  removeProductFromBoard,
+  addProductsToBoard,
+} from "../lib/dna";
 import { getSavedProducts } from "../lib/saveProduct";
 import { processProducts } from "../lib/processProducts";
 
@@ -14,7 +19,7 @@ const PRESET_TAGS = [
   "Occasion", "Casual", "Summer", "Winter",
 ];
 
-// ─── Ghost placeholder card (empty state visual) ──────────────────────────────
+// ─── Ghost placeholder card ───────────────────────────────────────────────────
 
 function GhostCard() {
   return (
@@ -23,7 +28,7 @@ function GhostCard() {
         border: "1px solid var(--border)",
         borderRadius: 2,
         overflow: "hidden",
-        opacity: 0.3,
+        opacity: 0.28,
         pointerEvents: "none",
       }}
     >
@@ -78,8 +83,7 @@ function CreateBoardModal({ onClose, onCreated }) {
       <div
         onClick={onClose}
         style={{
-          position: "fixed",
-          inset: 0,
+          position: "fixed", inset: 0,
           background: "rgba(0,0,0,0.45)",
           zIndex: 200,
           backdropFilter: "blur(3px)",
@@ -89,8 +93,7 @@ function CreateBoardModal({ onClose, onCreated }) {
       <div
         style={{
           position: "fixed",
-          left: "50%",
-          top: "50%",
+          left: "50%", top: "50%",
           transform: "translate(-50%, -50%)",
           background: "#fff",
           borderRadius: 2,
@@ -99,7 +102,6 @@ function CreateBoardModal({ onClose, onCreated }) {
           overflow: "hidden",
         }}
       >
-        {/* Header */}
         <div
           style={{
             borderBottom: "1px solid var(--border)",
@@ -115,16 +117,10 @@ function CreateBoardModal({ onClose, onCreated }) {
           <button
             onClick={onClose}
             style={{
-              background: "none",
-              border: "1px solid var(--border)",
-              borderRadius: 2,
-              width: 28,
-              height: 28,
-              cursor: "pointer",
-              fontSize: 12,
-              color: "var(--muted)",
-              display: "grid",
-              placeItems: "center",
+              background: "none", border: "1px solid var(--border)",
+              borderRadius: 2, width: 28, height: 28,
+              cursor: "pointer", fontSize: 12, color: "var(--muted)",
+              display: "grid", placeItems: "center",
             }}
           >
             ✕
@@ -132,16 +128,12 @@ function CreateBoardModal({ onClose, onCreated }) {
         </div>
 
         <div style={{ padding: "18px 18px 22px" }}>
-          {/* Name */}
           <div style={{ marginBottom: 18 }}>
             <label
               style={{
-                fontSize: 10,
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--muted)",
-                display: "block",
-                marginBottom: 8,
+                fontSize: 10, textTransform: "uppercase",
+                letterSpacing: "0.12em", color: "var(--muted)",
+                display: "block", marginBottom: 8,
               }}
             >
               Board name *
@@ -153,27 +145,19 @@ function CreateBoardModal({ onClose, onCreated }) {
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               placeholder="e.g. Holiday wardrobe"
               style={{
-                width: "100%",
-                boxSizing: "border-box",
-                border: "1px solid var(--border)",
-                borderRadius: 2,
-                padding: "10px 12px",
-                fontSize: 13,
-                outline: "none",
+                width: "100%", boxSizing: "border-box",
+                border: "1px solid var(--border)", borderRadius: 2,
+                padding: "10px 12px", fontSize: 13, outline: "none",
               }}
             />
           </div>
 
-          {/* Preset tags */}
           <div style={{ marginBottom: 18 }}>
             <label
               style={{
-                fontSize: 10,
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--muted)",
-                display: "block",
-                marginBottom: 8,
+                fontSize: 10, textTransform: "uppercase",
+                letterSpacing: "0.12em", color: "var(--muted)",
+                display: "block", marginBottom: 8,
               }}
             >
               Tags (optional)
@@ -190,10 +174,8 @@ function CreateBoardModal({ onClose, onCreated }) {
                       border: `1px solid ${active ? "#111" : "var(--border)"}`,
                       background: active ? "#111" : "transparent",
                       color: active ? "#fff" : "#111",
-                      borderRadius: 20,
-                      fontSize: 11,
-                      cursor: "pointer",
-                      transition: "all 0.12s",
+                      borderRadius: 20, fontSize: 11,
+                      cursor: "pointer", transition: "all 0.12s",
                     }}
                   >
                     {tag}
@@ -201,79 +183,51 @@ function CreateBoardModal({ onClose, onCreated }) {
                 );
               })}
             </div>
-
-            {/* Custom tag input */}
             <div style={{ display: "flex", gap: 6 }}>
               <input
                 value={customTag}
                 onChange={(e) => setCustomTag(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") { e.preventDefault(); addCustomTag(); }
-                }}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomTag(); } }}
                 placeholder="Add custom tag…"
                 style={{
-                  flex: 1,
-                  border: "1px solid var(--border)",
-                  borderRadius: 2,
-                  padding: "8px 10px",
-                  fontSize: 12,
-                  outline: "none",
+                  flex: 1, border: "1px solid var(--border)", borderRadius: 2,
+                  padding: "8px 10px", fontSize: 12, outline: "none",
                 }}
               />
               <button
                 onClick={addCustomTag}
                 style={{
-                  border: "1px solid var(--border)",
-                  borderRadius: 2,
-                  padding: "8px 12px",
-                  fontSize: 11,
-                  cursor: "pointer",
-                  background: "transparent",
-                  color: "var(--muted)",
+                  border: "1px solid var(--border)", borderRadius: 2,
+                  padding: "8px 12px", fontSize: 11, cursor: "pointer",
+                  background: "transparent", color: "var(--muted)",
                 }}
               >
                 Add
               </button>
             </div>
-
-            {/* Custom tags selected */}
             {selectedTags.filter((t) => !PRESET_TAGS.includes(t)).length > 0 && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 8 }}>
-                {selectedTags
-                  .filter((t) => !PRESET_TAGS.includes(t))
-                  .map((tag) => (
-                    <span
-                      key={tag}
+                {selectedTags.filter((t) => !PRESET_TAGS.includes(t)).map((tag) => (
+                  <span
+                    key={tag}
+                    style={{
+                      padding: "3px 8px", background: "#111", color: "#fff",
+                      borderRadius: 20, fontSize: 11,
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                    }}
+                  >
+                    {tag}
+                    <button
+                      onClick={() => setSelectedTags((prev) => prev.filter((t2) => t2 !== tag))}
                       style={{
-                        padding: "3px 8px",
-                        background: "#111",
-                        color: "#fff",
-                        borderRadius: 20,
-                        fontSize: 11,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 4,
+                        background: "none", border: "none", color: "#fff",
+                        cursor: "pointer", fontSize: 10, padding: 0, lineHeight: 1,
                       }}
                     >
-                      {tag}
-                      <button
-                        onClick={() =>
-                          setSelectedTags((prev) => prev.filter((t2) => t2 !== tag))
-                        }
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#fff",
-                          cursor: "pointer",
-                          fontSize: 10,
-                          padding: 0,
-                          lineHeight: 1,
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </span>
-                  ))}
+                      ✕
+                    </button>
+                  </span>
+                ))}
               </div>
             )}
           </div>
@@ -282,17 +236,12 @@ function CreateBoardModal({ onClose, onCreated }) {
             onClick={handleSubmit}
             disabled={!name.trim()}
             style={{
-              width: "100%",
-              padding: "12px",
+              width: "100%", padding: "12px",
               background: name.trim() ? "#111" : "#ccc",
-              color: "#fff",
-              border: "none",
-              borderRadius: 2,
-              fontSize: 12,
-              fontWeight: 700,
+              color: "#fff", border: "none", borderRadius: 2,
+              fontSize: 12, fontWeight: 700,
               cursor: name.trim() ? "pointer" : "default",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
+              textTransform: "uppercase", letterSpacing: "0.08em",
               transition: "background 0.15s",
             }}
           >
@@ -317,40 +266,24 @@ function BoardCard({ board, productMap, onClick }) {
       onClick={onClick}
       style={{
         border: "1px solid var(--border)",
-        borderRadius: 2,
-        overflow: "hidden",
-        cursor: "pointer",
+        borderRadius: 2, overflow: "hidden", cursor: "pointer",
       }}
     >
-      {/* 2×2 image preview */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 1,
-          background: "var(--border)",
-          aspectRatio: "1",
+          display: "grid", gridTemplateColumns: "1fr 1fr",
+          gap: 1, background: "var(--border)", aspectRatio: "1",
         }}
       >
         {previews.length === 0 ? (
           <div
             style={{
-              gridColumn: "1 / -1",
-              gridRow: "1 / -1",
+              gridColumn: "1 / -1", gridRow: "1 / -1",
               background: "#f0f0ec",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              display: "flex", alignItems: "center", justifyContent: "center",
             }}
           >
-            <span
-              style={{
-                fontSize: 10,
-                color: "var(--muted)",
-                textTransform: "uppercase",
-                letterSpacing: "0.1em",
-              }}
-            >
+            <span style={{ fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               Empty
             </span>
           </div>
@@ -373,8 +306,6 @@ function BoardCard({ board, productMap, onClick }) {
           )
         )}
       </div>
-
-      {/* Card info */}
       <div style={{ padding: "10px 12px" }}>
         <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{board.name}</div>
         {board.tags?.length > 0 && (
@@ -383,11 +314,9 @@ function BoardCard({ board, productMap, onClick }) {
               <span
                 key={tag}
                 style={{
-                  fontSize: 10,
-                  padding: "2px 7px",
+                  fontSize: 10, padding: "2px 7px",
                   border: "1px solid var(--border)",
-                  borderRadius: 20,
-                  color: "var(--muted)",
+                  borderRadius: 20, color: "var(--muted)",
                 }}
               >
                 {tag}
@@ -396,10 +325,235 @@ function BoardCard({ board, productMap, onClick }) {
           </div>
         )}
         <div style={{ fontSize: 11, color: "var(--muted)" }}>
-          {board.items?.length || 0}{" "}
-          {(board.items?.length || 0) === 1 ? "item" : "items"}
+          {board.items?.length || 0} {(board.items?.length || 0) === 1 ? "item" : "items"}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Selectable card (used only in selection mode) ────────────────────────────
+
+function SelectableCard({ product, selected, onToggle }) {
+  return (
+    <div
+      onClick={onToggle}
+      style={{
+        cursor: "pointer",
+        outline: selected ? "2px solid #111" : "2px solid transparent",
+        outlineOffset: -2,
+        borderRadius: 2,
+        overflow: "hidden",
+        transition: "outline-color 0.12s",
+      }}
+    >
+      <div style={{ position: "relative", overflow: "hidden" }}>
+        <Image
+          src={product.image}
+          alt={product.title}
+          width={400}
+          height={500}
+          unoptimized
+          style={{
+            width: "100%",
+            height: "auto",
+            aspectRatio: "3/4",
+            objectFit: "cover",
+            display: "block",
+            opacity: selected ? 1 : 0.82,
+            transition: "opacity 0.15s",
+          }}
+        />
+
+        {/* Subtle overlay when selected */}
+        {selected && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(17,17,17,0.08)",
+              pointerEvents: "none",
+            }}
+          />
+        )}
+
+        {/* Selection indicator dot */}
+        <div
+          style={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            width: 22,
+            height: 22,
+            borderRadius: "50%",
+            background: selected ? "#111" : "rgba(255,255,255,0.7)",
+            border: selected ? "none" : "1.5px solid rgba(255,255,255,0.9)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "background 0.15s",
+          }}
+        >
+          {selected && (
+            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+              <path d="M1 4l2.5 2.5L9 1" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </div>
+      </div>
+
+      <div style={{ padding: "8px 10px 10px" }}>
+        <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 2 }}>{product.brand}</div>
+        <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.3 }}>{product.title}</div>
+        <div style={{ fontSize: 11, fontWeight: 700, marginTop: 3 }}>{product.price}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Selection view ───────────────────────────────────────────────────────────
+
+function SelectionView({ board, savedProducts, onAdd, onCancel }) {
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const inBoard = new Set(board.items || []);
+  const available = (savedProducts || []).filter((p) => !inBoard.has(p.id));
+
+  const toggle = (id) =>
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+
+  const count = selectedIds.length;
+
+  return (
+    <div>
+      {/* Sticky action bar */}
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          background: "#fff",
+          borderBottom: "1px solid var(--border)",
+          padding: "11px 0 12px",
+          marginBottom: 22,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <button
+            onClick={onCancel}
+            style={{
+              background: "none",
+              border: "1px solid var(--border)",
+              borderRadius: 2,
+              padding: "6px 12px",
+              fontSize: 11,
+              cursor: "pointer",
+              color: "var(--muted)",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}
+          >
+            Cancel
+          </button>
+          <span
+            style={{
+              fontSize: 12,
+              color: count > 0 ? "#111" : "var(--muted)",
+              transition: "color 0.15s",
+            }}
+          >
+            {count > 0 ? `${count} selected` : "Select pieces to add"}
+          </span>
+          {count > 0 && (
+            <button
+              onClick={() => setSelectedIds([])}
+              style={{
+                background: "none",
+                border: "none",
+                fontSize: 11,
+                color: "var(--muted)",
+                cursor: "pointer",
+                padding: 0,
+                textDecoration: "underline",
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        <button
+          onClick={() => count > 0 && onAdd(selectedIds)}
+          disabled={count === 0}
+          style={{
+            background: count > 0 ? "#111" : "#e0e0dc",
+            color: count > 0 ? "#fff" : "#aaa",
+            border: "none",
+            borderRadius: 2,
+            padding: "9px 18px",
+            fontSize: 11,
+            fontWeight: 700,
+            cursor: count > 0 ? "pointer" : "default",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            transition: "background 0.15s, color 0.15s",
+          }}
+        >
+          {count > 0 ? `Add ${count} to board` : "Add to board"}
+        </button>
+      </div>
+
+      {/* Section label */}
+      <div
+        style={{
+          fontSize: 10,
+          textTransform: "uppercase",
+          letterSpacing: "0.12em",
+          color: "var(--muted)",
+          marginBottom: 14,
+        }}
+      >
+        Your saved items
+      </div>
+
+      {available.length === 0 ? (
+        <div
+          style={{
+            background: "#f5f5f0",
+            borderRadius: 2,
+            padding: "28px 22px",
+            textAlign: "center",
+          }}
+        >
+          <div style={{ fontSize: 13, color: "var(--muted)" }}>
+            {(savedProducts || []).length === 0
+              ? "Save some products first, then add them to this board."
+              : "All your saved items are already in this board."}
+          </div>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+            gap: "16px 10px",
+          }}
+        >
+          {available.map((product) => (
+            <SelectableCard
+              key={product.id}
+              product={product}
+              selected={selectedIds.includes(product.id)}
+              onToggle={() => toggle(product.id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -411,20 +565,22 @@ function BoardDetailView({
   productMap,
   products,
   dna,
+  savedProducts,
   savedIds,
   onToggleSave,
   onOpenPanel,
   onBack,
   onRemoveItem,
   onDeleteBoard,
+  onBoardsChange,
 }) {
+  const [selectionMode, setSelectionMode] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const boardProducts = (board.items || [])
     .map((id) => productMap[id])
     .filter(Boolean);
 
-  // Suggested: score full catalogue, exclude items already in board
   const suggested = useMemo(() => {
     if (!products?.length) return [];
     const inBoard = new Set(board.items || []);
@@ -433,9 +589,28 @@ function BoardDetailView({
       .slice(0, 8);
   }, [products, dna, board.items]);
 
+  const handleAdd = (selectedIds) => {
+    const updated = addProductsToBoard(board.id, selectedIds);
+    onBoardsChange(updated);
+    setSelectionMode(false);
+  };
+
+  // ── Selection mode ──────────────────────────────────────────────────────────
+  if (selectionMode) {
+    return (
+      <SelectionView
+        board={board}
+        savedProducts={savedProducts}
+        onAdd={handleAdd}
+        onCancel={() => setSelectionMode(false)}
+      />
+    );
+  }
+
+  // ── Normal detail ───────────────────────────────────────────────────────────
   return (
     <div>
-      {/* Header row: back + board name + delete */}
+      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -487,19 +662,35 @@ function BoardDetailView({
           )}
         </div>
 
-        <div style={{ flexShrink: 0 }}>
+        <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+          {/* Add pieces CTA */}
+          <button
+            onClick={() => setSelectionMode(true)}
+            style={{
+              background: "#111",
+              color: "#fff",
+              border: "none",
+              borderRadius: 2,
+              padding: "7px 14px",
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: "pointer",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}
+          >
+            Add pieces
+          </button>
+
+          {/* Delete */}
           {confirmDelete ? (
-            <div style={{ display: "flex", gap: 6 }}>
+            <>
               <button
                 onClick={() => onDeleteBoard(board.id)}
                 style={{
-                  background: "#c0392b",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 2,
-                  padding: "6px 12px",
-                  fontSize: 11,
-                  cursor: "pointer",
+                  background: "#c0392b", color: "#fff",
+                  border: "none", borderRadius: 2,
+                  padding: "7px 12px", fontSize: 11, cursor: "pointer",
                 }}
               >
                 Delete
@@ -509,48 +700,55 @@ function BoardDetailView({
                 style={{
                   background: "transparent",
                   border: "1px solid var(--border)",
-                  borderRadius: 2,
-                  padding: "6px 12px",
-                  fontSize: 11,
-                  cursor: "pointer",
+                  borderRadius: 2, padding: "7px 12px",
+                  fontSize: 11, cursor: "pointer",
                 }}
               >
                 Cancel
               </button>
-            </div>
+            </>
           ) : (
             <button
               onClick={() => setConfirmDelete(true)}
               style={{
                 background: "transparent",
                 border: "1px solid var(--border)",
-                borderRadius: 2,
-                padding: "6px 12px",
-                fontSize: 11,
-                color: "var(--muted)",
-                cursor: "pointer",
+                borderRadius: 2, padding: "7px 12px",
+                fontSize: 11, color: "var(--muted)", cursor: "pointer",
               }}
             >
-              Delete board
+              Delete
             </button>
           )}
         </div>
       </div>
 
-      {/* Products */}
+      {/* Board products */}
       {boardProducts.length === 0 ? (
         <div
           style={{
             background: "#f5f5f0",
             borderRadius: 2,
-            padding: "28px 22px",
+            padding: "32px 22px",
             textAlign: "center",
             marginBottom: 36,
           }}
         >
-          <div style={{ fontSize: 13, color: "var(--muted)" }}>
-            No products yet. Open any product and add it to this board.
+          <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 14 }}>
+            No products in this board yet.
           </div>
+          <button
+            onClick={() => setSelectionMode(true)}
+            style={{
+              background: "#111", color: "#fff",
+              border: "none", borderRadius: 2,
+              padding: "10px 18px", fontSize: 11,
+              fontWeight: 700, cursor: "pointer",
+              textTransform: "uppercase", letterSpacing: "0.08em",
+            }}
+          >
+            Add pieces
+          </button>
         </div>
       ) : (
         <div
@@ -565,15 +763,9 @@ function BoardDetailView({
             <div key={product.id}>
               <div
                 onClick={() => onOpenPanel(product)}
-                style={{ cursor: "pointer", position: "relative" }}
+                style={{ cursor: "pointer" }}
               >
-                <div
-                  style={{
-                    position: "relative",
-                    overflow: "hidden",
-                    borderRadius: 2,
-                  }}
-                >
+                <div style={{ position: "relative", overflow: "hidden", borderRadius: 2 }}>
                   <Image
                     src={product.image}
                     alt={product.title}
@@ -581,55 +773,31 @@ function BoardDetailView({
                     height={500}
                     unoptimized
                     style={{
-                      width: "100%",
-                      height: "auto",
-                      aspectRatio: "4/5",
-                      objectFit: "cover",
-                      display: "block",
+                      width: "100%", height: "auto",
+                      aspectRatio: "4/5", objectFit: "cover", display: "block",
                     }}
                   />
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveItem(board.id, product.id);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); onRemoveItem(board.id, product.id); }}
                     title="Remove from board"
                     style={{
-                      position: "absolute",
-                      top: 6,
-                      right: 6,
+                      position: "absolute", top: 6, right: 6,
                       background: "rgba(255,255,255,0.92)",
                       border: "1px solid var(--border)",
-                      borderRadius: 2,
-                      width: 26,
-                      height: 26,
-                      display: "grid",
-                      placeItems: "center",
-                      cursor: "pointer",
-                      fontSize: 10,
-                      color: "var(--muted)",
+                      borderRadius: 2, width: 26, height: 26,
+                      display: "grid", placeItems: "center",
+                      cursor: "pointer", fontSize: 10, color: "var(--muted)",
                     }}
                   >
                     ✕
                   </button>
                 </div>
                 <div style={{ marginTop: 8 }}>
-                  <div style={{ fontSize: 11, color: "var(--muted)" }}>
-                    {product.brand}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 500,
-                      marginTop: 2,
-                      lineHeight: 1.3,
-                    }}
-                  >
+                  <div style={{ fontSize: 11, color: "var(--muted)" }}>{product.brand}</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, marginTop: 2, lineHeight: 1.3 }}>
                     {product.title}
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 700, marginTop: 3 }}>
-                    {product.price}
-                  </div>
+                  <div style={{ fontSize: 11, fontWeight: 700, marginTop: 3 }}>{product.price}</div>
                 </div>
               </div>
             </div>
@@ -640,23 +808,10 @@ function BoardDetailView({
       {/* Suggested for this board */}
       {suggested.length > 0 && (
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: 28 }}>
-          <h3
-            style={{
-              margin: "0 0 4px",
-              fontSize: 11,
-              textTransform: "uppercase",
-              letterSpacing: "0.12em",
-            }}
-          >
+          <h3 style={{ margin: "0 0 4px", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em" }}>
             Suggested for this board
           </h3>
-          <p
-            style={{
-              margin: "0 0 18px",
-              fontSize: 12,
-              color: "var(--muted)",
-            }}
-          >
+          <p style={{ margin: "0 0 18px", fontSize: 12, color: "var(--muted)" }}>
             Based on your style DNA.
           </p>
           <ProductGrid
@@ -680,6 +835,7 @@ export default function BoardsSection({
   products,
   dna,
   savedIds,
+  savedProducts,
   onToggleSave,
   onBoardsChange,
   onOpenPanel,
@@ -688,32 +844,28 @@ export default function BoardsSection({
   const [selectedBoardId, setSelectedBoardId] = useState(null);
   const [activeTag, setActiveTag] = useState(null);
 
-  // Product lookup: saved products from storage + fetched catalogue
   const productMap = useMemo(() => {
     const saved = getSavedProducts();
     return Object.fromEntries([
       ...saved.map((p) => [p.id, p]),
-      ...(products || []).map((p) => [p.id, p]), // catalogue takes precedence
+      ...(products || []).map((p) => [p.id, p]),
     ]);
   }, [products]);
 
-  // All unique tags across boards (for filter chips)
   const allTags = useMemo(() => {
     const tags = new Set();
     (boards || []).forEach((b) => (b.tags || []).forEach((t) => tags.add(t)));
     return [...tags];
   }, [boards]);
 
-  // Boards filtered by active tag
   const visibleBoards = useMemo(() => {
     if (!activeTag) return boards || [];
     return (boards || []).filter((b) => (b.tags || []).includes(activeTag));
   }, [boards, activeTag]);
 
-  // Handlers
   const handleCreated = (board) => {
     onBoardsChange([...(boards || []), board]);
-    setSelectedBoardId(board.id); // navigate into new board
+    setSelectedBoardId(board.id);
   };
 
   const handleDeleteBoard = (boardId) => {
@@ -731,26 +883,20 @@ export default function BoardsSection({
   const selectedBoard = (boards || []).find((b) => b.id === selectedBoardId);
   if (selectedBoardId && selectedBoard) {
     return (
-      <>
-        <BoardDetailView
-          board={selectedBoard}
-          productMap={productMap}
-          products={products}
-          dna={dna}
-          savedIds={savedIds}
-          onToggleSave={onToggleSave}
-          onOpenPanel={onOpenPanel}
-          onBack={() => setSelectedBoardId(null)}
-          onRemoveItem={handleRemoveItem}
-          onDeleteBoard={handleDeleteBoard}
-        />
-        {showCreate && (
-          <CreateBoardModal
-            onClose={() => setShowCreate(false)}
-            onCreated={handleCreated}
-          />
-        )}
-      </>
+      <BoardDetailView
+        board={selectedBoard}
+        productMap={productMap}
+        products={products}
+        dna={dna}
+        savedProducts={savedProducts || getSavedProducts()}
+        savedIds={savedIds}
+        onToggleSave={onToggleSave}
+        onOpenPanel={onOpenPanel}
+        onBack={() => setSelectedBoardId(null)}
+        onRemoveItem={handleRemoveItem}
+        onDeleteBoard={handleDeleteBoard}
+        onBoardsChange={onBoardsChange}
+      />
     );
   }
 
@@ -759,38 +905,18 @@ export default function BoardsSection({
     return (
       <>
         <div style={{ marginBottom: 8 }}>
-          <div
-            style={{
-              fontSize: 14,
-              fontWeight: 600,
-              marginBottom: 6,
-            }}
-          >
-            No boards yet
-          </div>
-          <div
-            style={{
-              fontSize: 12,
-              color: "var(--muted)",
-              marginBottom: 18,
-              lineHeight: 1.5,
-            }}
-          >
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>No boards yet</div>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 18, lineHeight: 1.5 }}>
             Create boards to organise your looks by occasion, season, or mood.
           </div>
           <button
             onClick={() => setShowCreate(true)}
             style={{
-              background: "#111",
-              color: "#fff",
-              border: "none",
-              borderRadius: 2,
-              padding: "11px 20px",
-              fontSize: 11,
-              fontWeight: 700,
-              cursor: "pointer",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
+              background: "#111", color: "#fff",
+              border: "none", borderRadius: 2,
+              padding: "11px 20px", fontSize: 11,
+              fontWeight: 700, cursor: "pointer",
+              textTransform: "uppercase", letterSpacing: "0.08em",
               marginBottom: 28,
             }}
           >
@@ -798,7 +924,6 @@ export default function BoardsSection({
           </button>
         </div>
 
-        {/* Ghost placeholder grid */}
         <div
           style={{
             display: "grid",
@@ -806,16 +931,11 @@ export default function BoardsSection({
             gap: 12,
           }}
         >
-          {[1, 2, 3].map((i) => (
-            <GhostCard key={i} />
-          ))}
+          {[1, 2, 3].map((i) => <GhostCard key={i} />)}
         </div>
 
         {showCreate && (
-          <CreateBoardModal
-            onClose={() => setShowCreate(false)}
-            onCreated={handleCreated}
-          />
+          <CreateBoardModal onClose={() => setShowCreate(false)} onCreated={handleCreated} />
         )}
       </>
     );
@@ -824,7 +944,6 @@ export default function BoardsSection({
   // ── Board list view ─────────────────────────────────────────────────────────
   return (
     <>
-      {/* Toolbar: count + new board button */}
       <div
         style={{
           display: "flex",
@@ -841,28 +960,17 @@ export default function BoardsSection({
           style={{
             background: "transparent",
             border: "1px solid var(--border)",
-            borderRadius: 2,
-            padding: "7px 14px",
-            fontSize: 11,
-            cursor: "pointer",
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
+            borderRadius: 2, padding: "7px 14px",
+            fontSize: 11, cursor: "pointer",
+            textTransform: "uppercase", letterSpacing: "0.08em",
           }}
         >
           + New board
         </button>
       </div>
 
-      {/* Tag filter chips */}
       {allTags.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            gap: 6,
-            flexWrap: "wrap",
-            marginBottom: 20,
-          }}
-        >
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 20 }}>
           <button
             onClick={() => setActiveTag(null)}
             style={{
@@ -870,10 +978,8 @@ export default function BoardsSection({
               border: `1px solid ${!activeTag ? "#111" : "var(--border)"}`,
               background: !activeTag ? "#111" : "transparent",
               color: !activeTag ? "#fff" : "#111",
-              borderRadius: 20,
-              fontSize: 11,
-              cursor: "pointer",
-              transition: "all 0.12s",
+              borderRadius: 20, fontSize: 11,
+              cursor: "pointer", transition: "all 0.12s",
             }}
           >
             All
@@ -887,10 +993,8 @@ export default function BoardsSection({
                 border: `1px solid ${activeTag === tag ? "#111" : "var(--border)"}`,
                 background: activeTag === tag ? "#111" : "transparent",
                 color: activeTag === tag ? "#fff" : "#111",
-                borderRadius: 20,
-                fontSize: 11,
-                cursor: "pointer",
-                transition: "all 0.12s",
+                borderRadius: 20, fontSize: 11,
+                cursor: "pointer", transition: "all 0.12s",
               }}
             >
               {tag}
@@ -899,7 +1003,6 @@ export default function BoardsSection({
         </div>
       )}
 
-      {/* Board cards or empty-filter state */}
       {visibleBoards.length === 0 ? (
         <div style={{ fontSize: 12, color: "var(--muted)", padding: "16px 0" }}>
           No boards tagged &ldquo;{activeTag}&rdquo;.
@@ -925,10 +1028,7 @@ export default function BoardsSection({
       )}
 
       {showCreate && (
-        <CreateBoardModal
-          onClose={() => setShowCreate(false)}
-          onCreated={handleCreated}
-        />
+        <CreateBoardModal onClose={() => setShowCreate(false)} onCreated={handleCreated} />
       )}
     </>
   );
