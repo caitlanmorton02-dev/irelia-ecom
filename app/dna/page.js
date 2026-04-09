@@ -24,7 +24,8 @@ import {
 import { generateDNADescription } from "../../lib/styleDNA";
 import { fetchProducts } from "../../lib/fetchProducts";
 import { processProducts } from "../../lib/processProducts";
-import { loadSavedIds, saveSavedIds, loadStyleDNA } from "../../lib/storage";
+import { loadStyleDNA } from "../../lib/storage";
+import { useSaved } from "../../lib/useSaved";
 
 // ─── Step 1: Style vibe image grid ───────────────────────────────────────────
 
@@ -533,7 +534,7 @@ function DNABadge({ label }) {
 function ResultView({ dna, onRetake }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [savedIds, setSavedIds] = useState([]);
+  const { savedProducts, savedIds, toggle: toggleSaved } = useSaved();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [baseDNA, setBaseDNA] = useState(null);
   const [toast, setToast] = useState({ visible: false, message: "" });
@@ -543,13 +544,8 @@ function ResultView({ dna, onRetake }) {
       .then(setProducts)
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
-    setSavedIds(loadSavedIds());
     setBaseDNA(loadStyleDNA());
   }, []);
-
-  useEffect(() => {
-    saveSavedIds(savedIds);
-  }, [savedIds]);
 
   const showToast = (msg) => {
     setToast({ visible: true, message: msg });
@@ -557,11 +553,11 @@ function ResultView({ dna, onRetake }) {
   };
 
   const toggleSave = (id) => {
-    const isAdding = !savedIds.includes(id);
-    setSavedIds((prev) =>
-      isAdding ? [...prev, id] : prev.filter((v) => v !== id)
-    );
-    if (isAdding) showToast("Saved to your edit ♥");
+    // Find full product object from curated list or full products list
+    const product = curated.find((p) => p.id === id) || products.find((p) => p.id === id);
+    if (!product) return;
+    const added = toggleSaved(product);
+    if (added) showToast("Saved to your edit ♥");
   };
 
   // Curated feed: hard-filter by DNA match first, then score + sort, limit 30
