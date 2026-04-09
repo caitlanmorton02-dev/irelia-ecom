@@ -4,8 +4,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "IRELIA - Your Edit",
-  description: "IRELIA ecommerce discovery platform",
+  title: "AURALIS - Your Edit",
+  description: "AURALIS AI-powered fashion discovery platform",
 };
 
 export default function RootLayout({ children }) {

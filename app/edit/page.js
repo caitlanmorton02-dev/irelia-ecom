@@ -4,59 +4,83 @@ import { useEffect, useMemo, useState } from "react";
 import Header from "../../components/Header";
 import SavedEdit from "../../components/SavedEdit";
 import ProductPanel from "../../components/ProductPanel";
-import { fetchProducts } from "../../lib/fetchProducts";
+import BoardsSection from "../../components/BoardsSection";
+import { applyPreferences, fetchProducts } from "../../lib/fetchProducts";
+import Toast from "../../components/Toast";
 import { loadSavedIds, saveSavedIds, loadStyleDNA } from "../../lib/storage";
+import { loadBoards } from "../../lib/dna";
 
 export default function EditPage() {
   const [products, setProducts] = useState([]);
   const [savedIds, setSavedIds] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [dna, setDNA] = useState({ stores: [], brands: [], vibes: [], colors: [], sizes: [] });
+  const [boards, setBoards] = useState([]);
+  const [toast, setToast] = useState({ visible: false, message: "" });
+  const [dna, setDNA] = useState({
+    stores: [], brands: [], vibes: [], colors: [], sizes: [],
+    fit: "", primaryStyle: null, secondaryStyle: null,
+  });
 
   useEffect(() => {
     fetchProducts().then(setProducts).catch(() => setProducts([]));
     setSavedIds(loadSavedIds());
     setDNA(loadStyleDNA());
+    setBoards(loadBoards());
   }, []);
 
   useEffect(() => {
     saveSavedIds(savedIds);
   }, [savedIds]);
 
+  // Saved items
   const savedProducts = useMemo(
-    () => products.filter((product) => savedIds.includes(product.id)),
+    () => products.filter((p) => savedIds.includes(p.id)),
     [products, savedIds]
   );
 
+  // All products sorted by DNA for "More like your style" / "Trending for style"
+  const sortedProducts = useMemo(
+    () => applyPreferences(products, dna),
+    [products, dna]
+  );
+
+  const showToast = (msg) => {
+    setToast({ visible: true, message: msg });
+    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2400);
+  };
+
   const toggleSave = (id) => {
-    setSavedIds((prev) =>
-      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
-    );
+    const isAdding = !savedIds.includes(id);
+    setSavedIds((prev) => isAdding ? [...prev, id] : prev.filter((v) => v !== id));
+    if (isAdding) showToast("Saved to your edit ♥");
   };
 
   return (
     <main>
       <Header savedCount={savedIds.length} />
-      <section className="container" style={{ paddingTop: 24, paddingBottom: 50 }}>
-        <h1
-          style={{
-            margin: "0 0 6px",
-            fontSize: 18,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-          }}
-        >
-          Your Edit
-        </h1>
-        {savedProducts.length > 0 && (
-          <p style={{ margin: "0 0 22px", fontSize: 13, color: "var(--muted)" }}>
-            {savedProducts.length} saved {savedProducts.length === 1 ? "item" : "items"}
-          </p>
-        )}
+      <section className="container" style={{ paddingTop: 24, paddingBottom: 56 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+          <h1 style={{ margin: 0, fontSize: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Your Edit
+          </h1>
+          {savedProducts.length > 0 && (
+            <span style={{ fontSize: 12, color: "var(--muted)" }}>
+              {savedProducts.length} {savedProducts.length === 1 ? "item" : "items"}
+            </span>
+          )}
+        </div>
+        <BoardsSection
+          boards={boards}
+          products={products}
+          onBoardsChange={setBoards}
+          onOpenPanel={setSelectedProduct}
+        />
+
         <SavedEdit
           products={savedProducts}
-          allProducts={products}
+          allProducts={sortedProducts}
           savedIds={savedIds}
+          dna={dna}
           onToggleSave={toggleSave}
           onOpenPanel={setSelectedProduct}
         />
@@ -67,7 +91,10 @@ export default function EditPage() {
         onToggleSave={toggleSave}
         onClose={() => setSelectedProduct(null)}
         dna={dna}
+        onBoardsChange={setBoards}
       />
+
+      <Toast message={toast.message} visible={toast.visible} />
     </main>
   );
 }

@@ -6,8 +6,10 @@ import FilterBar from "../../components/FilterBar";
 import ProductGrid from "../../components/ProductGrid";
 import ProductPanel from "../../components/ProductPanel";
 import { SkeletonGrid } from "../../components/SkeletonCard";
+import Toast from "../../components/Toast";
 import { applyPreferences, fetchProducts, getUniqueValues, parsePrice } from "../../lib/fetchProducts";
 import { loadStyleDNA, loadSavedIds, saveSavedIds } from "../../lib/storage";
+import { loadAuralisDNA, mergeWithAuralisDNA } from "../../lib/dna";
 
 const PAGE_SIZE = 60;
 
@@ -30,6 +32,7 @@ export default function ShopPage() {
   const [queryCategory, setQueryCategory] = useState("");
   // Chips the user has temporarily dismissed for this session
   const [removedDNAChips, setRemovedDNAChips] = useState(new Set());
+  const [toast, setToast] = useState({ visible: false, message: "" });
 
   useEffect(() => {
     fetchProducts()
@@ -37,7 +40,9 @@ export default function ShopPage() {
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
     setSavedIds(loadSavedIds());
-    setDNA(loadStyleDNA());
+    const base = loadStyleDNA();
+    const auralis = loadAuralisDNA();
+    setDNA(mergeWithAuralisDNA(base, auralis));
   }, []);
 
   useEffect(() => {
@@ -86,8 +91,15 @@ export default function ShopPage() {
   const visibleProducts = filteredProducts.slice(0, page * PAGE_SIZE);
   const hasMore = visibleProducts.length < filteredProducts.length;
 
+  const showToast = (msg) => {
+    setToast({ visible: true, message: msg });
+    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2400);
+  };
+
   const toggleSave = (id) => {
-    setSavedIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
+    const isAdding = !savedIds.includes(id);
+    setSavedIds((prev) => isAdding ? [...prev, id] : prev.filter((v) => v !== id));
+    if (isAdding) showToast("Saved to your edit ♥");
   };
 
   return (
@@ -143,6 +155,8 @@ export default function ShopPage() {
         onClose={() => setSelectedProduct(null)}
         dna={dna}
       />
+
+      <Toast message={toast.message} visible={toast.visible} />
     </main>
   );
 }
