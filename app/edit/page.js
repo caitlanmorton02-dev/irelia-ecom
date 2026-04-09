@@ -145,6 +145,9 @@ export default function EditPage() {
           <BoardsSection
             boards={boards}
             products={products}
+            dna={dna}
+            savedIds={savedIds}
+            onToggleSave={toggleSave}
             onBoardsChange={setBoards}
             onOpenPanel={setSelectedProduct}
           />

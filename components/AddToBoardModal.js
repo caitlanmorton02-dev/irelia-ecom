@@ -23,9 +23,9 @@ export default function AddToBoardModal({ product, boards, onClose, onBoardsChan
 
   const handleCreateAndAdd = () => {
     const name = newBoardName.trim() || "My Board";
-    // Auto-save to Edit too
+    // Auto-save to Edit too; no tags at quick-create time (tags are set in full create flow)
     saveProduct(product);
-    const board = createBoard(name);
+    const board = createBoard(name, []);
     const updated = addProductToBoard(board.id, product.id);
     onBoardsChange(updated);
     setAdded(board.id);
