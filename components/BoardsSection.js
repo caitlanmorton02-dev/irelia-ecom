@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { deleteBoard, removeProductFromBoard } from "../lib/dna";
+import { getSavedProducts } from "../lib/saveProduct";
 
 export default function BoardsSection({ boards, products, onBoardsChange, onOpenPanel }) {
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -27,7 +28,13 @@ export default function BoardsSection({ boards, products, onBoardsChange, onOpen
     );
   }
 
-  const productMap = Object.fromEntries((products || []).map((p) => [p.id, p]));
+  // Build product lookup from both the catalogue prop AND saved products (localStorage).
+  // This ensures board items resolve even if the catalogue hasn't loaded yet.
+  const savedProductsFromStorage = getSavedProducts();
+  const productMap = Object.fromEntries([
+    ...savedProductsFromStorage.map((p) => [p.id, p]),
+    ...(products || []).map((p) => [p.id, p]), // catalogue takes precedence
+  ]);
 
   const handleDeleteBoard = (boardId) => {
     const updated = deleteBoard(boardId);

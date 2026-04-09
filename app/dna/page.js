@@ -537,7 +537,6 @@ function ResultView({ dna, onRetake }) {
   const { savedProducts, savedIds, toggle: toggleSaved } = useSaved();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [baseDNA, setBaseDNA] = useState(null);
-  const [toast, setToast] = useState({ visible: false, message: "" });
 
   useEffect(() => {
     fetchProducts()
@@ -547,17 +546,11 @@ function ResultView({ dna, onRetake }) {
     setBaseDNA(loadStyleDNA());
   }, []);
 
-  const showToast = (msg) => {
-    setToast({ visible: true, message: msg });
-    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2400);
-  };
-
   const toggleSave = (id) => {
     // Find full product object from curated list or full products list
     const product = curated.find((p) => p.id === id) || products.find((p) => p.id === id);
     if (!product) return;
-    const added = toggleSaved(product);
-    if (added) showToast("Saved to your edit ♥");
+    toggleSaved(product);
   };
 
   // Curated feed: hard-filter by DNA match first, then score + sort, limit 30
@@ -793,7 +786,6 @@ function ResultView({ dna, onRetake }) {
         dna={effectiveDNA}
       />
 
-      <Toast message={toast.message} visible={toast.visible} />
     </main>
   );
 }

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { createBoard, addProductToBoard } from "../lib/dna";
+import { saveProduct } from "../lib/saveProduct";
 
-export default function AddToBoardModal({ product, boards, onClose, onBoardsChange, onSuccess }) {
+export default function AddToBoardModal({ product, boards, onClose, onBoardsChange, onSuccess, onSaveToEdit }) {
   const [newBoardName, setNewBoardName] = useState("");
   const [creating, setCreating] = useState(false);
   const [added, setAdded] = useState(null);
@@ -11,6 +12,8 @@ export default function AddToBoardModal({ product, boards, onClose, onBoardsChan
   if (!product) return null;
 
   const handleAddToBoard = (boardId) => {
+    // Auto-save to Edit too (product must be saved to be in a board)
+    saveProduct(product);
     const updated = addProductToBoard(boardId, product.id);
     onBoardsChange(updated);
     setAdded(boardId);
@@ -20,13 +23,19 @@ export default function AddToBoardModal({ product, boards, onClose, onBoardsChan
 
   const handleCreateAndAdd = () => {
     const name = newBoardName.trim() || "My Board";
+    // Auto-save to Edit too
+    saveProduct(product);
     const board = createBoard(name);
-    // addProductToBoard returns updated boards list
     const updated = addProductToBoard(board.id, product.id);
     onBoardsChange(updated);
     setAdded(board.id);
     if (onSuccess) onSuccess();
     setTimeout(onClose, 900);
+  };
+
+  const handleSaveToEdit = () => {
+    if (onSaveToEdit) onSaveToEdit();
+    onClose();
   };
 
   return (
@@ -92,6 +101,29 @@ export default function AddToBoardModal({ product, boards, onClose, onBoardsChan
         </div>
 
         <div style={{ padding: "16px 18px" }}>
+          {/* Save to Edit only (shown when invoked from save button) */}
+          {onSaveToEdit && (
+            <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid var(--border)" }}>
+              <button
+                onClick={handleSaveToEdit}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  border: "1px solid #111",
+                  background: "#fff",
+                  color: "#111",
+                  borderRadius: 2,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  textAlign: "left",
+                }}
+              >
+                Save to Edit only
+              </button>
+            </div>
+          )}
+
           {/* Existing boards */}
           {boards.length > 0 && (
             <div style={{ marginBottom: 16 }}>

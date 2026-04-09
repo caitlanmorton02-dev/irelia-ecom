@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import SaveIcon from "./SaveIcon";
 
 export default function ProductCard({ product, isSaved, onToggleSave, onOpenPanel }) {
   return (
@@ -33,9 +34,10 @@ export default function ProductCard({ product, isSaved, onToggleSave, onOpenPane
             display: "grid",
             placeItems: "center",
             cursor: "pointer",
+            color: isSaved ? "#111" : "var(--muted)",
           }}
         >
-          {isSaved ? "♥" : "♡"}
+          <SaveIcon saved={isSaved} size={13} />
         </button>
       </div>
 

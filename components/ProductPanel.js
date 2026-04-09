@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import StyleDNAChips from "./StyleDNAChips";
 import AddToBoardModal from "./AddToBoardModal";
+import SaveIcon from "./SaveIcon";
 import { addRecentlyViewed } from "../lib/storage";
 import { getProductMatchReason } from "../lib/styleDNA";
 import { loadBoards } from "../lib/dna";
@@ -264,40 +265,35 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
           >
             Shop {product.retailer}
           </a>
+          {/* Save button — if not saved and boards exist, show board picker */}
           <button
-            onClick={() => setShowBoardModal(true)}
-            aria-label="Add to board"
-            title="Add to board"
-            style={{
-              width: 50,
-              border: "1px solid var(--border)",
-              borderRadius: 2,
-              background: "#fff",
-              color: "#111",
-              fontSize: 16,
-              cursor: "pointer",
-              transition: "background 0.18s, color 0.18s",
-              flexShrink: 0,
+            onClick={() => {
+              if (saved) {
+                // Already saved → unsave from Edit
+                onToggleSave(product.id);
+              } else if (boards.length > 0) {
+                // Boards exist → let user choose where to save
+                setShowBoardModal(true);
+              } else {
+                // No boards → auto-save to Edit
+                onToggleSave(product.id);
+              }
             }}
-          >
-            +
-          </button>
-          <button
-            onClick={() => onToggleSave(product.id)}
             aria-label={saved ? "Remove from Your Edit" : "Save to Your Edit"}
             style={{
               width: 50,
-              border: "1px solid var(--border)",
+              border: `1px solid ${saved ? "#111" : "var(--border)"}`,
               borderRadius: 2,
               background: saved ? "#111" : "#fff",
               color: saved ? "#fff" : "#111",
-              fontSize: 18,
               cursor: "pointer",
               transition: "background 0.18s, color 0.18s",
               flexShrink: 0,
+              display: "grid",
+              placeItems: "center",
             }}
           >
-            {saved ? "♥" : "♡"}
+            <SaveIcon saved={saved} size={16} />
           </button>
         </div>
 
@@ -311,11 +307,12 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
           onBoardsChange={(updated) => {
             handleBoardsChange(updated);
           }}
+          onSaveToEdit={() => onToggleSave(product.id)}
           onSuccess={() => showPanelToast("Added to board ✦")}
         />
       )}
 
-      {/* Panel-level toast for board saves */}
+      {/* Panel-level toast for board actions only */}
       {panelToast.visible && (
         <div
           className="toast toast--visible"

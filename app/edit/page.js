@@ -7,7 +7,6 @@ import ProductPanel from "../../components/ProductPanel";
 import BoardsSection from "../../components/BoardsSection";
 import { fetchProducts } from "../../lib/fetchProducts";
 import { processProducts } from "../../lib/processProducts";
-import Toast from "../../components/Toast";
 import { loadStyleDNA } from "../../lib/storage";
 import { loadBoards, loadAuralisDNA, mergeWithAuralisDNA } from "../../lib/dna";
 import { useSaved } from "../../lib/useSaved";
@@ -19,7 +18,6 @@ export default function EditPage() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [boards, setBoards] = useState([]);
   const [activeTab, setActiveTab] = useState("The Edit");
-  const [toast, setToast] = useState({ visible: false, message: "" });
   const [dna, setDNA] = useState({
     stores: [], brands: [], vibes: [], colors: [], sizes: [],
     fit: "", primaryStyle: null, secondaryStyle: null,
@@ -41,11 +39,6 @@ export default function EditPage() {
     [products, dna]
   );
 
-  const showToast = (msg) => {
-    setToast({ visible: true, message: msg });
-    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2400);
-  };
-
   const toggleSave = (id) => {
     // Look up the full product object: check saved list first, then full catalogue
     const product =
@@ -53,8 +46,7 @@ export default function EditPage() {
       sortedProducts.find((p) => p.id === id) ||
       products.find((p) => p.id === id);
     if (!product) return;
-    const added = toggleSaved(product);
-    if (added) showToast("Saved to your edit ♥");
+    toggleSaved(product);
   };
 
   return (
@@ -168,7 +160,6 @@ export default function EditPage() {
         onBoardsChange={setBoards}
       />
 
-      <Toast message={toast.message} visible={toast.visible} />
     </main>
   );
 }

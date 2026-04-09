@@ -6,7 +6,6 @@ import FilterBar from "../../components/FilterBar";
 import ProductGrid from "../../components/ProductGrid";
 import ProductPanel from "../../components/ProductPanel";
 import { SkeletonGrid } from "../../components/SkeletonCard";
-import Toast from "../../components/Toast";
 import { fetchProducts, getUniqueValues, parsePrice } from "../../lib/fetchProducts";
 import { processProducts } from "../../lib/processProducts";
 import { loadStyleDNA } from "../../lib/storage";
@@ -34,7 +33,6 @@ export default function ShopPage() {
   const [queryCategory, setQueryCategory] = useState("");
   // Chips the user has temporarily dismissed for this session
   const [removedDNAChips, setRemovedDNAChips] = useState(new Set());
-  const [toast, setToast] = useState({ visible: false, message: "" });
 
   useEffect(() => {
     fetchProducts()
@@ -96,17 +94,11 @@ export default function ShopPage() {
   const visibleProducts = filteredProducts.slice(0, page * PAGE_SIZE);
   const hasMore = visibleProducts.length < filteredProducts.length;
 
-  const showToast = (msg) => {
-    setToast({ visible: true, message: msg });
-    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2400);
-  };
-
   const toggleSave = (id) => {
     // Find the full product object so we can store it in auralis_saved
     const product = products.find((p) => p.id === id);
     if (!product) return;
-    const added = toggleSaved(product);
-    if (added) showToast("Saved to your edit ♥");
+    toggleSaved(product);
   };
 
   return (
@@ -214,7 +206,6 @@ export default function ShopPage() {
         dna={dna}
       />
 
-      <Toast message={toast.message} visible={toast.visible} />
     </main>
   );
 }

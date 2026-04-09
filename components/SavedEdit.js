@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import ProductGrid from "./ProductGrid";
 import StyleDNACard from "./StyleDNACard";
+import SaveIcon from "./SaveIcon";
 
 const CATEGORY_TILES = [
   { name: "Women", image: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=600&q=80", href: "/shop?category=Women" },
@@ -173,17 +174,19 @@ export default function SavedEdit({ products, allProducts, savedIds, dna, onTogg
                 <button
                   onClick={() => onToggleSave(product.id)}
                   style={{
-                    border: "1px solid var(--border)",
+                    border: "1px solid #111",
                     borderRadius: 2,
                     padding: "9px 12px",
-                    background: "#fff",
-                    fontSize: 16,
+                    background: "#111",
+                    color: "#fff",
                     cursor: "pointer",
                     transition: "all 0.15s",
+                    display: "grid",
+                    placeItems: "center",
                   }}
                   aria-label="Remove from Your Edit"
                 >
-                  ♥
+                  <SaveIcon saved={true} size={13} />
                 </button>
               </div>
             </div>
