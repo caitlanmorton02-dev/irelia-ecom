@@ -9,8 +9,9 @@ import { SkeletonGrid } from "../../components/SkeletonCard";
 import Toast from "../../components/Toast";
 import { fetchProducts, getUniqueValues, parsePrice } from "../../lib/fetchProducts";
 import { processProducts } from "../../lib/processProducts";
-import { loadStyleDNA, loadSavedIds, saveSavedIds } from "../../lib/storage";
+import { loadStyleDNA } from "../../lib/storage";
 import { loadAuralisDNA, mergeWithAuralisDNA, STYLE_RECOMMENDATIONS } from "../../lib/dna";
+import { useSaved } from "../../lib/useSaved";
 
 const PAGE_SIZE = 60;
 
@@ -24,7 +25,7 @@ const NAV_CATEGORY_MAP = {
 export default function ShopPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [savedIds, setSavedIds] = useState([]);
+  const { savedProducts, savedIds, toggle: toggleSaved } = useSaved();
   const [dna, setDNA] = useState({ stores: [], brands: [], vibes: [], colors: [], sizes: [] });
   const [page, setPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -40,7 +41,6 @@ export default function ShopPage() {
       .then(setProducts)
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
-    setSavedIds(loadSavedIds());
     const base = loadStyleDNA();
     const auralis = loadAuralisDNA();
     setDNA(mergeWithAuralisDNA(base, auralis));
@@ -58,10 +58,6 @@ export default function ShopPage() {
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, []);
-
-  useEffect(() => {
-    saveSavedIds(savedIds);
-  }, [savedIds]);
 
   useEffect(() => {
     const fromQuery = new URLSearchParams(window.location.search).get("category");
@@ -106,9 +102,11 @@ export default function ShopPage() {
   };
 
   const toggleSave = (id) => {
-    const isAdding = !savedIds.includes(id);
-    setSavedIds((prev) => isAdding ? [...prev, id] : prev.filter((v) => v !== id));
-    if (isAdding) showToast("Saved to your edit ♥");
+    // Find the full product object so we can store it in auralis_saved
+    const product = products.find((p) => p.id === id);
+    if (!product) return;
+    const added = toggleSaved(product);
+    if (added) showToast("Saved to your edit ♥");
   };
 
   return (
