@@ -8,6 +8,7 @@ import ProductPanel from "../../components/ProductPanel";
 import { SkeletonGrid } from "../../components/SkeletonCard";
 import { applyPreferences, fetchProducts, getUniqueValues, parsePrice } from "../../lib/fetchProducts";
 import { loadStyleDNA, loadSavedIds, saveSavedIds } from "../../lib/storage";
+import { loadAuralisDNA, mergeWithAuralisDNA } from "../../lib/dna";
 
 const PAGE_SIZE = 60;
 
@@ -37,7 +38,9 @@ export default function ShopPage() {
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
     setSavedIds(loadSavedIds());
-    setDNA(loadStyleDNA());
+    const base = loadStyleDNA();
+    const auralis = loadAuralisDNA();
+    setDNA(mergeWithAuralisDNA(base, auralis));
   }, []);
 
   useEffect(() => {

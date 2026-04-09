@@ -121,7 +121,7 @@ export default function HomePage() {
               </Link>
               {!hasDNA && (
                 <Link
-                  href="/quiz"
+                  href="/dna"
                   style={{
                     display: "inline-block",
                     border: "1px solid rgba(255,255,255,0.65)",

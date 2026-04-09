@@ -39,7 +39,7 @@ export default function Header({ savedCount = 0 }) {
         }}
       >
         <Link href="/" style={{ letterSpacing: "0.16em", fontWeight: 700, fontSize: 17 }}>
-          IRELIA
+          AURALIS
         </Link>
 
         <nav
@@ -57,7 +57,8 @@ export default function Header({ savedCount = 0 }) {
             "/edit",
             savedCount > 0 ? `Your Edit (${savedCount})` : "Your Edit"
           )}
-          {navLink("/quiz", "Style DNA")}
+          {navLink("/dna", "Your DNA")}
+          {navLink("/quiz", "Style Quiz")}
           {navLink("/profile", "Account")}
         </nav>
       </div>

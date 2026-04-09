@@ -4,13 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import Header from "../../components/Header";
 import SavedEdit from "../../components/SavedEdit";
 import ProductPanel from "../../components/ProductPanel";
+import BoardsSection from "../../components/BoardsSection";
 import { applyPreferences, fetchProducts } from "../../lib/fetchProducts";
 import { loadSavedIds, saveSavedIds, loadStyleDNA } from "../../lib/storage";
+import { loadBoards } from "../../lib/dna";
 
 export default function EditPage() {
   const [products, setProducts] = useState([]);
   const [savedIds, setSavedIds] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [boards, setBoards] = useState([]);
   const [dna, setDNA] = useState({
     stores: [], brands: [], vibes: [], colors: [], sizes: [],
     fit: "", primaryStyle: null, secondaryStyle: null,
@@ -20,6 +23,7 @@ export default function EditPage() {
     fetchProducts().then(setProducts).catch(() => setProducts([]));
     setSavedIds(loadSavedIds());
     setDNA(loadStyleDNA());
+    setBoards(loadBoards());
   }, []);
 
   useEffect(() => {
@@ -57,6 +61,13 @@ export default function EditPage() {
             </span>
           )}
         </div>
+        <BoardsSection
+          boards={boards}
+          products={products}
+          onBoardsChange={setBoards}
+          onOpenPanel={setSelectedProduct}
+        />
+
         <SavedEdit
           products={savedProducts}
           allProducts={sortedProducts}

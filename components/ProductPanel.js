@@ -3,18 +3,30 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import StyleDNAChips from "./StyleDNAChips";
+import AddToBoardModal from "./AddToBoardModal";
 import { addRecentlyViewed } from "../lib/storage";
 import { getProductMatchReason } from "../lib/styleDNA";
+import { loadBoards } from "../lib/dna";
 
-export default function ProductPanel({ product, saved, onClose, onToggleSave, dna }) {
+export default function ProductPanel({ product, saved, onClose, onToggleSave, dna, boards: boardsProp, onBoardsChange }) {
   const [removedChips, setRemovedChips] = useState(new Set());
+  const [showBoardModal, setShowBoardModal] = useState(false);
+  const [boards, setBoards] = useState(boardsProp || []);
 
   useEffect(() => {
     if (product) {
       addRecentlyViewed(product.id);
       setRemovedChips(new Set());
+      setShowBoardModal(false);
+      // Refresh boards from storage each time a product is opened
+      setBoards(loadBoards());
     }
   }, [product?.id]);
+
+  const handleBoardsChange = (updated) => {
+    setBoards(updated);
+    if (onBoardsChange) onBoardsChange(updated);
+  };
 
   if (!product) return null;
 
@@ -247,6 +259,24 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
             Shop {product.retailer}
           </a>
           <button
+            onClick={() => setShowBoardModal(true)}
+            aria-label="Add to board"
+            title="Add to board"
+            style={{
+              width: 50,
+              border: "1px solid var(--border)",
+              borderRadius: 2,
+              background: "#fff",
+              color: "#111",
+              fontSize: 16,
+              cursor: "pointer",
+              transition: "background 0.18s, color 0.18s",
+              flexShrink: 0,
+            }}
+          >
+            +
+          </button>
+          <button
             onClick={() => onToggleSave(product.id)}
             aria-label={saved ? "Remove from Your Edit" : "Save to Your Edit"}
             style={{
@@ -266,6 +296,15 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
         </div>
 
       </aside>
+
+      {showBoardModal && (
+        <AddToBoardModal
+          product={product}
+          boards={boards}
+          onClose={() => setShowBoardModal(false)}
+          onBoardsChange={handleBoardsChange}
+        />
+      )}
     </>
   );
 }
