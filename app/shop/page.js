@@ -10,7 +10,7 @@ import Toast from "../../components/Toast";
 import { fetchProducts, getUniqueValues, parsePrice } from "../../lib/fetchProducts";
 import { processProducts } from "../../lib/processProducts";
 import { loadStyleDNA, loadSavedIds, saveSavedIds } from "../../lib/storage";
-import { loadAuralisDNA, mergeWithAuralisDNA } from "../../lib/dna";
+import { loadAuralisDNA, mergeWithAuralisDNA, STYLE_RECOMMENDATIONS } from "../../lib/dna";
 
 const PAGE_SIZE = 60;
 
@@ -44,6 +44,19 @@ export default function ShopPage() {
     const base = loadStyleDNA();
     const auralis = loadAuralisDNA();
     setDNA(mergeWithAuralisDNA(base, auralis));
+  }, []);
+
+  // Re-read DNA when user navigates back to this tab (e.g. after completing quiz in another tab)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        const base = loadStyleDNA();
+        const auralis = loadAuralisDNA();
+        setDNA(mergeWithAuralisDNA(base, auralis));
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, []);
 
   useEffect(() => {
@@ -128,6 +141,57 @@ export default function ShopPage() {
             onRemoveDNAChip={(key) => setRemovedDNAChips((prev) => new Set([...prev, key]))}
           />
         </div>
+
+        {/* ── Recommendation banner (shown when DNA has a primaryStyle) ──── */}
+        {!loading && effectiveDNA?.primaryStyle && (() => {
+          const recs = (STYLE_RECOMMENDATIONS[effectiveDNA.primaryStyle] || []).slice(0, 3);
+          if (!recs.length) return null;
+          return (
+            <div
+              style={{
+                border: "1px solid var(--border)",
+                borderRadius: 2,
+                padding: "16px 18px",
+                marginBottom: 24,
+                background: "#fafafa",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 10,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.14em",
+                  color: "var(--muted)",
+                  marginBottom: 12,
+                }}
+              >
+                Curated for your {effectiveDNA.primaryStyle} style
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+                  gap: 8,
+                }}
+              >
+                {recs.map((rec, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      border: "1px solid var(--border)",
+                      borderRadius: 2,
+                      padding: "10px 12px",
+                      background: "#fff",
+                    }}
+                  >
+                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 3 }}>{rec.label}</div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.4 }}>{rec.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {loading ? (
           <SkeletonGrid count={8} />

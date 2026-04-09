@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { PRODUCTS } from "../../../lib/products";
 import { normaliseAwin, normaliseRakuten, normaliseImpact } from "../../../lib/normalisers";
 
 export async function fetchAwinProducts() {
@@ -48,19 +49,8 @@ export async function fetchImpactProducts() {
 
 export async function GET() {
   try {
-    const [awinRaw, rakutenRaw, impactRaw] = await Promise.all([
-      fetchAwinProducts(),
-      fetchRakutenProducts(),
-      fetchImpactProducts(),
-    ]);
-
-    const products = [
-      ...awinRaw.map(normaliseAwin),
-      ...rakutenRaw.map(normaliseRakuten),
-      ...impactRaw.map(normaliseImpact),
-    ];
-
-    return NextResponse.json({ products });
+    // Serve the curated Auralis dataset — brands/colours/tags aligned with DNA quiz
+    return NextResponse.json({ products: PRODUCTS });
   } catch (error) {
     return NextResponse.json({ error: "Failed to load products" }, { status: 500 });
   }

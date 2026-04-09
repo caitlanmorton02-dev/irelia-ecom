@@ -4,8 +4,8 @@ import Image from "next/image";
 
 export default function ProductCard({ product, isSaved, onToggleSave, onOpenPanel }) {
   return (
-    <article className="fade-in">
-      <div onClick={() => onOpenPanel(product)} style={{ cursor: "pointer", position: "relative", overflow: "hidden", borderRadius: 2 }}>
+    <article className="fade-in" onClick={() => onOpenPanel(product)} style={{ cursor: "pointer" }}>
+      <div style={{ position: "relative", overflow: "hidden", borderRadius: 2 }}>
         <Image
           src={product.image}
           alt={product.title}
