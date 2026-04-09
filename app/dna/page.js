@@ -11,15 +11,17 @@ import Toast from "../../components/Toast";
 import QuizStep from "../../components/dna/QuizStep";
 import {
   STYLE_OPTIONS,
-  COLOUR_OPTIONS,
+  OUTFIT_OPTIONS,
+  COLOUR_GROUPS,
   BRAND_OPTIONS,
   computeDNA,
   saveAuralisDNA,
 } from "../../lib/dna";
+import { generateDNADescription, STYLE_CATEGORY_MAP } from "../../lib/styleDNA";
 import { applyPreferences, fetchProducts } from "../../lib/fetchProducts";
 import { loadSavedIds, saveSavedIds, loadStyleDNA } from "../../lib/storage";
 
-// ─── Quiz step renderers ──────────────────────────────────────────────────────
+// ─── Step 1: Style vibe image grid ───────────────────────────────────────────
 
 function StyleGrid({ selected, onToggle }) {
   return (
@@ -105,57 +107,183 @@ function StyleGrid({ selected, onToggle }) {
   );
 }
 
-function ColourGrid({ selected, onToggle }) {
+// ─── Step 2: Real-life outfit scenarios ──────────────────────────────────────
+
+function OutfitGrid({ selected, onToggle }) {
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
-      {COLOUR_OPTIONS.map((c) => {
-        const active = selected.includes(c.name);
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(185px, 1fr))",
+        gap: 10,
+        marginBottom: 4,
+      }}
+    >
+      {OUTFIT_OPTIONS.map((opt) => {
+        const active = selected.includes(opt.id);
         return (
           <button
-            key={c.name}
-            onClick={() => onToggle(c.name)}
-            title={c.name}
+            key={opt.id}
+            onClick={() => onToggle(opt.id)}
             style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 6,
-              border: "none",
               background: "none",
-              cursor: "pointer",
+              border: `2px solid ${active ? "#111" : "transparent"}`,
               padding: 0,
+              cursor: "pointer",
+              textAlign: "left",
+              position: "relative",
+              borderRadius: 2,
+              overflow: "hidden",
+              transition: "border-color 0.18s, transform 0.15s",
+              transform: active ? "scale(0.97)" : "scale(1)",
             }}
           >
+            <Image
+              src={opt.image}
+              alt={opt.label}
+              width={500}
+              height={580}
+              unoptimized
+              style={{ width: "100%", height: "auto", aspectRatio: "5/6", objectFit: "cover", display: "block" }}
+            />
             <div
               style={{
-                width: 50,
-                height: 50,
-                borderRadius: "50%",
-                background: c.hex,
-                border: active ? "3px solid #111" : "2px solid var(--border)",
-                transition: "all 0.15s",
-                transform: active ? "scale(1.12)" : "scale(1)",
-                boxShadow: active ? "0 0 0 3px #fff inset" : "none",
-              }}
-            />
-            <span
-              style={{
-                fontSize: 10,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                color: active ? "#111" : "var(--muted)",
-                fontWeight: active ? 600 : 400,
-                transition: "color 0.15s",
+                position: "absolute",
+                inset: 0,
+                background: active
+                  ? "rgba(0,0,0,0.15)"
+                  : "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 55%)",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "flex-end",
+                padding: "12px 12px",
+                transition: "background 0.18s",
               }}
             >
-              {c.name}
-            </span>
+              {active && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 9,
+                    right: 9,
+                    width: 24,
+                    height: 24,
+                    background: "#111",
+                    borderRadius: "50%",
+                    display: "grid",
+                    placeItems: "center",
+                    color: "#fff",
+                    fontSize: 12,
+                  }}
+                >
+                  ✓
+                </div>
+              )}
+              <span style={{ color: "#fff", fontSize: 13, fontWeight: 700, display: "block" }}>
+                {opt.label}
+              </span>
+              <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, marginTop: 2 }}>
+                {opt.desc}
+              </span>
+            </div>
           </button>
         );
       })}
     </div>
   );
 }
+
+// ─── Step 3: Grouped colour palettes ─────────────────────────────────────────
+
+function PaletteGrid({ selected, onToggle }) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+        gap: 10,
+      }}
+    >
+      {COLOUR_GROUPS.map((group) => {
+        const active = selected.includes(group.id);
+        return (
+          <button
+            key={group.id}
+            onClick={() => onToggle(group.id)}
+            style={{
+              border: `2px solid ${active ? "#111" : "var(--border)"}`,
+              borderRadius: 2,
+              padding: "16px 18px",
+              cursor: "pointer",
+              background: active ? "#fafafa" : "#fff",
+              textAlign: "left",
+              transition: "border-color 0.18s, background 0.15s",
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+            }}
+          >
+            {/* Swatch row */}
+            <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+              {group.swatches.slice(0, 4).map((hex, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: "50%",
+                    background: hex,
+                    border: "1px solid rgba(0,0,0,0.08)",
+                    flexShrink: 0,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Label + desc */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: active ? 700 : 500,
+                  color: "#111",
+                  marginBottom: 2,
+                  transition: "font-weight 0.15s",
+                }}
+              >
+                {group.label}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--muted)" }}>
+                {group.desc}
+              </div>
+            </div>
+
+            {/* Checkmark */}
+            {active && (
+              <div
+                style={{
+                  width: 20,
+                  height: 20,
+                  background: "#111",
+                  borderRadius: "50%",
+                  display: "grid",
+                  placeItems: "center",
+                  color: "#fff",
+                  fontSize: 11,
+                  flexShrink: 0,
+                }}
+              >
+                ✓
+              </div>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Step 4: Brand chips ──────────────────────────────────────────────────────
 
 function BrandChips({ selected, onToggle }) {
   return (
@@ -186,7 +314,26 @@ function BrandChips({ selected, onToggle }) {
   );
 }
 
-// ─── Result view (step 3) ─────────────────────────────────────────────────────
+// ─── Result view ──────────────────────────────────────────────────────────────
+
+function DNABadge({ label }) {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        border: "1px solid #111",
+        borderRadius: 20,
+        padding: "4px 12px",
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+      }}
+    >
+      {label}
+    </span>
+  );
+}
 
 function ResultView({ dna }) {
   const [products, setProducts] = useState([]);
@@ -211,7 +358,7 @@ function ResultView({ dna }) {
 
   const showToast = (msg) => {
     setToast({ visible: true, message: msg });
-    setTimeout(() => setToast({ visible: false, message: msg }), 2400);
+    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2400);
   };
 
   const toggleSave = (id) => {
@@ -222,24 +369,24 @@ function ResultView({ dna }) {
     if (isAdding) showToast("Saved to your edit ♥");
   };
 
-  // Hard-filter: products must match at least one selected brand, color, or vibe
+  // Hard-filter: must match at least one selected brand, colour, or primary style category
   const curated = useMemo(() => {
     if (!products.length) return [];
-    const { brands = [], colors = [], vibes = [] } = dna;
-    const hasFilters = brands.length || colors.length || vibes.length;
+    const { brands = [], colors = [], primaryStyle, filters } = dna;
+
+    // Prefer the pre-built filters object if available
+    const filterBrands = filters?.brands?.length ? filters.brands : brands;
+    const filterColours = filters?.colours?.length ? filters.colours : colors;
+    const hasFilters = filterBrands.length || filterColours.length || primaryStyle;
 
     let pool = products;
     if (hasFilters) {
+      const styleCats = primaryStyle ? (STYLE_CATEGORY_MAP[primaryStyle] || []) : [];
       const filtered = products.filter(
         (p) =>
-          (brands.length && brands.includes(p.brand)) ||
-          (colors.length && colors.includes(p.color)) ||
-          (vibes.length &&
-            vibes.some(
-              (v) =>
-                (p.category || "").toLowerCase().includes(v.toLowerCase()) ||
-                (p.title || "").toLowerCase().includes(v.toLowerCase())
-            ))
+          (filterBrands.length && filterBrands.includes(p.brand)) ||
+          (filterColours.length && filterColours.includes(p.color)) ||
+          (styleCats.length && styleCats.includes(p.category))
       );
       pool = filtered.length ? filtered : products;
     }
@@ -247,51 +394,116 @@ function ResultView({ dna }) {
   }, [products, dna]);
 
   const effectiveDNA = baseDNA
-    ? { ...baseDNA, brands: [...new Set([...(baseDNA.brands || []), ...(dna.brands || [])])], colors: [...new Set([...(baseDNA.colors || []), ...(dna.colors || [])])] }
+    ? {
+        ...baseDNA,
+        brands: [...new Set([...(baseDNA.brands || []), ...(dna.brands || [])])],
+        colors: [...new Set([...(baseDNA.colors || []), ...(dna.colors || [])])],
+      }
     : dna;
+
+  const dnaDescription = generateDNADescription(dna.primaryStyle, dna.secondaryStyle);
 
   return (
     <main>
       <Header savedCount={savedIds.length} />
+
       <section className="container fade-in" style={{ paddingTop: 28, paddingBottom: 60 }}>
 
-        {/* DNA summary strip */}
+        {/* ── Your Auralis DNA summary ─────────────────────────────── */}
         <div
           style={{
             background: "#f5f5f0",
             borderRadius: 2,
-            padding: "20px 22px",
-            marginBottom: 32,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 12,
+            padding: "24px 26px",
+            marginBottom: 36,
           }}
         >
-          <div>
-            <div
-              style={{
-                fontSize: 10,
-                textTransform: "uppercase",
-                letterSpacing: "0.14em",
-                color: "var(--muted)",
-                marginBottom: 4,
-              }}
-            >
-              Your Auralis DNA
-            </div>
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em" }}>
-              {dna.primaryStyle || "Curated"}
-              {dna.secondaryStyle ? ` ${dna.secondaryStyle}` : ""}
-            </div>
-            {(dna.colors.length > 0 || dna.brands.length > 0) && (
-              <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
-                {[...dna.colors.slice(0, 3), ...dna.brands.slice(0, 2)].join(" · ")}
-              </div>
+          {/* Eyebrow */}
+          <div
+            style={{
+              fontSize: 10,
+              textTransform: "uppercase",
+              letterSpacing: "0.16em",
+              color: "var(--muted)",
+              marginBottom: 6,
+            }}
+          >
+            Your Auralis DNA
+          </div>
+
+          {/* Headline */}
+          <div
+            style={{
+              fontSize: 28,
+              fontWeight: 800,
+              letterSpacing: "-0.025em",
+              lineHeight: 1.15,
+              marginBottom: 8,
+            }}
+          >
+            {dna.primaryStyle || "Curated"}
+            {dna.secondaryStyle && (
+              <span style={{ color: "var(--muted)", fontWeight: 400, fontSize: 22 }}>
+                {" "}× {dna.secondaryStyle}
+              </span>
             )}
           </div>
-          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+
+          {/* Description */}
+          {dnaDescription && (
+            <p
+              style={{
+                fontSize: 13,
+                color: "var(--muted)",
+                lineHeight: 1.6,
+                margin: "0 0 16px",
+                maxWidth: 520,
+              }}
+            >
+              {dnaDescription}
+            </p>
+          )}
+
+          {/* Style badges */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
+            {dna.primaryStyle && <DNABadge label={dna.primaryStyle} />}
+            {dna.secondaryStyle && <DNABadge label={dna.secondaryStyle} />}
+            {dna.paletteType && (
+              <span
+                style={{
+                  display: "inline-block",
+                  border: "1px solid var(--border)",
+                  borderRadius: 20,
+                  padding: "4px 12px",
+                  fontSize: 11,
+                  letterSpacing: "0.06em",
+                  color: "var(--muted)",
+                  textTransform: "uppercase",
+                }}
+              >
+                {dna.paletteType}
+              </span>
+            )}
+            {(dna.brands || []).slice(0, 3).map((b) => (
+              <span
+                key={b}
+                style={{
+                  display: "inline-block",
+                  border: "1px solid var(--border)",
+                  borderRadius: 20,
+                  padding: "4px 12px",
+                  fontSize: 11,
+                  letterSpacing: "0.04em",
+                  color: "var(--muted)",
+                }}
+              >
+                {b}
+              </span>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 8 }}>
             <Link
               href="/dna"
               style={{
@@ -302,6 +514,7 @@ function ResultView({ dna }) {
                 letterSpacing: "0.09em",
                 borderRadius: 2,
                 color: "#111",
+                background: "#fff",
               }}
             >
               Retake
@@ -311,22 +524,37 @@ function ResultView({ dna }) {
               style={{
                 background: "#111",
                 color: "#fff",
-                padding: "9px 16px",
+                padding: "9px 20px",
                 fontSize: 11,
                 textTransform: "uppercase",
                 letterSpacing: "0.09em",
                 borderRadius: 2,
+                fontWeight: 600,
               }}
             >
-              View all →
+              Browse all →
             </Link>
           </div>
         </div>
 
-        {/* Curated products */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 18 }}>
-          <h1 style={{ margin: 0, fontSize: 16, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-            Curated for you
+        {/* ── Curated products ─────────────────────────────────────── */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            marginBottom: 18,
+          }}
+        >
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 16,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+            }}
+          >
+            Curated for your DNA
           </h1>
           <span style={{ fontSize: 12, color: "var(--muted)" }}>
             {loading ? "…" : `${curated.length} picks`}
@@ -346,7 +574,7 @@ function ResultView({ dna }) {
           />
         )}
 
-        <div style={{ textAlign: "center", marginTop: 32 }}>
+        <div style={{ textAlign: "center", marginTop: 36 }}>
           <Link
             href="/shop"
             style={{
@@ -377,26 +605,41 @@ function ResultView({ dna }) {
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// ─── Quiz steps config ────────────────────────────────────────────────────────
 
 const STEPS = [
   {
     title: "What's your vibe?",
-    subtitle: "Pick the styles that feel like you. Select as many as resonate.",
+    subtitle: "Pick the aesthetics that feel like you.",
+    hint: "Select as many as you like — we use this to understand your core style.",
+  },
+  {
+    title: "What would you actually wear?",
+    subtitle: "Choose the outfits you'd reach for day-to-day.",
+    hint: "This helps us understand how you dress in real life, not just what you aspire to.",
   },
   {
     title: "Your colour palette",
-    subtitle: "Select the colours you reach for most.",
+    subtitle: "Which palette do you gravitate towards most?",
+    hint: "Select one or more groups — we'll use these to match colours in your product feed.",
   },
   {
     title: "Which brands do you love?",
-    subtitle: "Pick your favourites — we'll prioritise them in your feed.",
+    subtitle: "Pick your favourites.",
+    hint: "We'll prioritise these brands in your curated edit.",
   },
 ];
 
+// ─── Main page ────────────────────────────────────────────────────────────────
+
 export default function DNAPage() {
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState({ styles: [], colors: [], brands: [] });
+  const [answers, setAnswers] = useState({
+    styles: [],
+    outfits: [],
+    colours: [],
+    brands: [],
+  });
   const [computedDNA, setComputedDNA] = useState(null);
   const [toast, setToast] = useState(false);
   const savedCount = typeof window !== "undefined" ? loadSavedIds().length : 0;
@@ -414,7 +657,9 @@ export default function DNAPage() {
     step === 0
       ? answers.styles.length > 0
       : step === 1
-      ? answers.colors.length > 0
+      ? answers.outfits.length > 0
+      : step === 2
+      ? answers.colours.length > 0
       : answers.brands.length > 0;
 
   const handleNext = () => {
@@ -422,7 +667,6 @@ export default function DNAPage() {
       setStep((s) => s + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      // Final step — compute, persist, show result
       const dna = computeDNA(answers);
       saveAuralisDNA(dna);
       setComputedDNA(dna);
@@ -436,7 +680,6 @@ export default function DNAPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Show result once DNA is computed
   if (computedDNA) {
     return <ResultView dna={computedDNA} />;
   }
@@ -447,7 +690,7 @@ export default function DNAPage() {
 
       <section
         className="container fade-in"
-        style={{ paddingTop: 32, paddingBottom: 60, maxWidth: 920 }}
+        style={{ paddingTop: 32, paddingBottom: 60, maxWidth: 960 }}
       >
         {/* Eyebrow */}
         <span
@@ -469,6 +712,7 @@ export default function DNAPage() {
             total={STEPS.length}
             title={STEPS[step].title}
             subtitle={STEPS[step].subtitle}
+            hint={STEPS[step].hint}
             onBack={handleBack}
             onNext={handleNext}
             canProceed={canProceed}
@@ -481,12 +725,18 @@ export default function DNAPage() {
               />
             )}
             {step === 1 && (
-              <ColourGrid
-                selected={answers.colors}
-                onToggle={toggleItem("colors")}
+              <OutfitGrid
+                selected={answers.outfits}
+                onToggle={toggleItem("outfits")}
               />
             )}
             {step === 2 && (
+              <PaletteGrid
+                selected={answers.colours}
+                onToggle={toggleItem("colours")}
+              />
+            )}
+            {step === 3 && (
               <BrandChips
                 selected={answers.brands}
                 onToggle={toggleItem("brands")}

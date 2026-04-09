@@ -7,6 +7,7 @@ export default function QuizStep({
   total,
   title,
   subtitle,
+  hint,
   children,
   onBack,
   onNext,
@@ -64,9 +65,23 @@ export default function QuizStep({
       >
         {title}
       </h2>
-      <p style={{ margin: "0 0 28px", fontSize: 14, color: "var(--muted)", lineHeight: 1.6 }}>
+      <p style={{ margin: "0 0 6px", fontSize: 14, color: "var(--muted)", lineHeight: 1.6 }}>
         {subtitle}
       </p>
+      {hint && (
+        <p
+          style={{
+            margin: "0 0 24px",
+            fontSize: 12,
+            color: "var(--muted)",
+            lineHeight: 1.5,
+            opacity: 0.7,
+            fontStyle: "italic",
+          }}
+        >
+          {hint}
+        </p>
+      )}
 
       {/* Step content */}
       {children}
