@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createBoard, addProductToBoard } from "../lib/dna";
 
-export default function AddToBoardModal({ product, boards, onClose, onBoardsChange }) {
+export default function AddToBoardModal({ product, boards, onClose, onBoardsChange, onSuccess }) {
   const [newBoardName, setNewBoardName] = useState("");
   const [creating, setCreating] = useState(false);
   const [added, setAdded] = useState(null);
@@ -14,6 +14,7 @@ export default function AddToBoardModal({ product, boards, onClose, onBoardsChan
     const updated = addProductToBoard(boardId, product.id);
     onBoardsChange(updated);
     setAdded(boardId);
+    if (onSuccess) onSuccess();
     setTimeout(onClose, 900);
   };
 
@@ -24,6 +25,7 @@ export default function AddToBoardModal({ product, boards, onClose, onBoardsChan
     const updated = addProductToBoard(board.id, product.id);
     onBoardsChange(updated);
     setAdded(board.id);
+    if (onSuccess) onSuccess();
     setTimeout(onClose, 900);
   };
 

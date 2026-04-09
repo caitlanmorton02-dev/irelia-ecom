@@ -194,6 +194,7 @@ function ResultView({ dna }) {
   const [savedIds, setSavedIds] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [baseDNA, setBaseDNA] = useState(null);
+  const [toast, setToast] = useState({ visible: false, message: "" });
 
   useEffect(() => {
     fetchProducts()
@@ -208,15 +209,42 @@ function ResultView({ dna }) {
     saveSavedIds(savedIds);
   }, [savedIds]);
 
-  const toggleSave = (id) =>
-    setSavedIds((prev) =>
-      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
-    );
+  const showToast = (msg) => {
+    setToast({ visible: true, message: msg });
+    setTimeout(() => setToast({ visible: false, message: msg }), 2400);
+  };
 
-  const curated = useMemo(
-    () => applyPreferences(products, dna).slice(0, 30),
-    [products, dna]
-  );
+  const toggleSave = (id) => {
+    const isAdding = !savedIds.includes(id);
+    setSavedIds((prev) =>
+      isAdding ? [...prev, id] : prev.filter((v) => v !== id)
+    );
+    if (isAdding) showToast("Saved to your edit ♥");
+  };
+
+  // Hard-filter: products must match at least one selected brand, color, or vibe
+  const curated = useMemo(() => {
+    if (!products.length) return [];
+    const { brands = [], colors = [], vibes = [] } = dna;
+    const hasFilters = brands.length || colors.length || vibes.length;
+
+    let pool = products;
+    if (hasFilters) {
+      const filtered = products.filter(
+        (p) =>
+          (brands.length && brands.includes(p.brand)) ||
+          (colors.length && colors.includes(p.color)) ||
+          (vibes.length &&
+            vibes.some(
+              (v) =>
+                (p.category || "").toLowerCase().includes(v.toLowerCase()) ||
+                (p.title || "").toLowerCase().includes(v.toLowerCase())
+            ))
+      );
+      pool = filtered.length ? filtered : products;
+    }
+    return applyPreferences(pool, dna).slice(0, 30);
+  }, [products, dna]);
 
   const effectiveDNA = baseDNA
     ? { ...baseDNA, brands: [...new Set([...(baseDNA.brands || []), ...(dna.brands || [])])], colors: [...new Set([...(baseDNA.colors || []), ...(dna.colors || [])])] }
@@ -343,6 +371,8 @@ function ResultView({ dna }) {
         onClose={() => setSelectedProduct(null)}
         dna={effectiveDNA}
       />
+
+      <Toast message={toast.message} visible={toast.visible} />
     </main>
   );
 }

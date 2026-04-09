@@ -12,6 +12,7 @@ import {
   loadSavedIds,
   loadRecentlyViewed,
 } from "../../lib/storage";
+import { loadAuralisDNA, mergeWithAuralisDNA } from "../../lib/dna";
 import { AESTHETIC_BOARDS } from "../../lib/styleDNA";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -233,6 +234,7 @@ function AestheticBoard({ board, selected, onToggle }) {
 
 export default function ProfilePage() {
   const [dna, setDNA] = useState({ stores: [], brands: [], vibes: [], colors: [], sizes: [], fit: "", primaryStyle: null, secondaryStyle: null, dnaLabel: null, dnaDescription: null });
+  const [auralisDNA, setAuralisDNA] = useState(null);
   const [savedCount, setSavedCount] = useState(0);
   const [recentCount, setRecentCount] = useState(0);
   const [aesthetics, setAesthetics] = useState([]);
@@ -242,7 +244,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const stored = loadStyleDNA();
+    const auralis = loadAuralisDNA();
     setDNA(stored);
+    setAuralisDNA(auralis);
     setSavedCount(loadSavedIds().length);
     setRecentCount(loadRecentlyViewed().length);
   }, []);
@@ -277,11 +281,17 @@ export default function ProfilePage() {
     setTimeout(() => editRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   };
 
+  // Merge auralis DNA signals into signal count
   const signalCount = [
-    ...(dna.vibes || []),
-    ...(dna.brands || []),
-    ...(dna.colors || []),
-    ...(dna.stores || []),
+    ...new Set([
+      ...(dna.vibes || []),
+      ...(dna.brands || []),
+      ...(dna.colors || []),
+      ...(dna.stores || []),
+      ...(auralisDNA?.brands || []),
+      ...(auralisDNA?.colors || []),
+      ...(auralisDNA?.vibes || []),
+    ]),
   ].length;
 
   return (
@@ -295,28 +305,99 @@ export default function ProfilePage() {
           <h1 style={{ margin: 0, fontSize: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>
             Account
           </h1>
-          {!dna.primaryStyle && (
-            <Link
-              href="/quiz"
-              style={{
-                background: "#111",
-                color: "#fff",
-                padding: "10px 18px",
-                fontSize: 11,
-                textTransform: "uppercase",
-                letterSpacing: "0.1em",
-                borderRadius: 2,
-              }}
-            >
-              Take style quiz →
-            </Link>
-          )}
+          <Link
+            href="/dna"
+            style={{
+              background: "#111",
+              color: "#fff",
+              padding: "10px 18px",
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              borderRadius: 2,
+            }}
+          >
+            {auralisDNA ? "Retake DNA →" : "Discover your DNA →"}
+          </Link>
         </div>
 
         {/* ── Style DNA hero card ──────────────────────────────────── */}
         <div style={{ marginBottom: 24 }}>
           <StyleDNACard dna={dna} variant="hero" onEdit={openEdit} />
         </div>
+
+        {/* ── Auralis DNA summary (shown when DNA quiz completed) ───── */}
+        {auralisDNA && (
+          <div
+            style={{
+              background: "#f5f5f0",
+              borderRadius: 2,
+              padding: "18px 20px",
+              marginBottom: 24,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              flexWrap: "wrap",
+              gap: 14,
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--muted)", marginBottom: 4 }}>
+                Auralis DNA
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em", marginBottom: 8 }}>
+                {auralisDNA.primaryStyle || "Curated"}
+                {auralisDNA.secondaryStyle ? ` × ${auralisDNA.secondaryStyle}` : ""}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {(auralisDNA.colors || []).slice(0, 4).map((c) => (
+                  <span
+                    key={c}
+                    style={{
+                      fontSize: 11,
+                      border: "1px solid var(--border)",
+                      borderRadius: 20,
+                      padding: "3px 10px",
+                      background: "#fff",
+                    }}
+                  >
+                    {c}
+                  </span>
+                ))}
+                {(auralisDNA.brands || []).slice(0, 3).map((b) => (
+                  <span
+                    key={b}
+                    style={{
+                      fontSize: 11,
+                      border: "1px solid #111",
+                      borderRadius: 20,
+                      padding: "3px 10px",
+                      background: "#fff",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {b}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <Link
+              href="/dna"
+              style={{
+                border: "1px solid var(--border)",
+                borderRadius: 2,
+                padding: "8px 14px",
+                fontSize: 11,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "#111",
+                flexShrink: 0,
+              }}
+            >
+              Edit DNA →
+            </Link>
+          </div>
+        )}
 
         {/* ── Stats row ────────────────────────────────────────────── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 36 }}>
@@ -405,7 +486,7 @@ export default function ProfilePage() {
               </button>
               <p style={{ marginTop: 10, fontSize: 12, color: "var(--muted)" }}>
                 Your preferences are applied instantly across the shop.{" "}
-                <Link href="/quiz" style={{ textDecoration: "underline" }}>Retake quiz →</Link>
+                <Link href="/dna" style={{ textDecoration: "underline" }}>Retake DNA quiz →</Link>
               </p>
             </div>
           )}

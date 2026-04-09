@@ -12,6 +12,7 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
   const [removedChips, setRemovedChips] = useState(new Set());
   const [showBoardModal, setShowBoardModal] = useState(false);
   const [boards, setBoards] = useState(boardsProp || []);
+  const [panelToast, setPanelToast] = useState({ visible: false, message: "" });
 
   useEffect(() => {
     if (product) {
@@ -22,6 +23,11 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
       setBoards(loadBoards());
     }
   }, [product?.id]);
+
+  const showPanelToast = (msg) => {
+    setPanelToast({ visible: true, message: msg });
+    setTimeout(() => setPanelToast((t) => ({ ...t, visible: false })), 2400);
+  };
 
   const handleBoardsChange = (updated) => {
     setBoards(updated);
@@ -302,8 +308,21 @@ export default function ProductPanel({ product, saved, onClose, onToggleSave, dn
           product={product}
           boards={boards}
           onClose={() => setShowBoardModal(false)}
-          onBoardsChange={handleBoardsChange}
+          onBoardsChange={(updated) => {
+            handleBoardsChange(updated);
+          }}
+          onSuccess={() => showPanelToast("Added to board ✦")}
         />
+      )}
+
+      {/* Panel-level toast for board saves */}
+      {panelToast.visible && (
+        <div
+          className="toast toast--visible"
+          style={{ zIndex: 300 }}
+        >
+          {panelToast.message}
+        </div>
       )}
     </>
   );

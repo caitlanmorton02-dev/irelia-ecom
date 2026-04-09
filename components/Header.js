@@ -58,7 +58,6 @@ export default function Header({ savedCount = 0 }) {
             savedCount > 0 ? `Your Edit (${savedCount})` : "Your Edit"
           )}
           {navLink("/dna", "Your DNA")}
-          {navLink("/quiz", "Style Quiz")}
           {navLink("/profile", "Account")}
         </nav>
       </div>

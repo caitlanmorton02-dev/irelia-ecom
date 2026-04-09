@@ -8,6 +8,7 @@ import ProductGrid from "../components/ProductGrid";
 import ProductPanel from "../components/ProductPanel";
 import StyleDNACard from "../components/StyleDNACard";
 import { SkeletonGrid } from "../components/SkeletonCard";
+import Toast from "../components/Toast";
 import { applyPreferences, fetchProducts } from "../lib/fetchProducts";
 import { STYLE_CATEGORY_MAP } from "../lib/styleDNA";
 import { loadStyleDNA, loadSavedIds, saveSavedIds } from "../lib/storage";
@@ -17,6 +18,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [savedIds, setSavedIds] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [toast, setToast] = useState({ visible: false, message: "" });
   const [dna, setDNA] = useState({
     stores: [], brands: [], vibes: [], colors: [], sizes: [],
     fit: "", primaryStyle: null, secondaryStyle: null,
@@ -36,10 +38,16 @@ export default function HomePage() {
     saveSavedIds(savedIds);
   }, [savedIds]);
 
-  const toggleSave = (id) =>
-    setSavedIds((prev) =>
-      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
-    );
+  const showToast = (msg) => {
+    setToast({ visible: true, message: msg });
+    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2400);
+  };
+
+  const toggleSave = (id) => {
+    const isAdding = !savedIds.includes(id);
+    setSavedIds((prev) => isAdding ? [...prev, id] : prev.filter((v) => v !== id));
+    if (isAdding) showToast("Saved to your edit ♥");
+  };
 
   const hasDNA = !!(dna.primaryStyle);
 
@@ -322,6 +330,8 @@ export default function HomePage() {
         onClose={() => setSelectedProduct(null)}
         dna={dna}
       />
+
+      <Toast message={toast.message} visible={toast.visible} />
     </main>
   );
 }

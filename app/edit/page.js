@@ -6,6 +6,7 @@ import SavedEdit from "../../components/SavedEdit";
 import ProductPanel from "../../components/ProductPanel";
 import BoardsSection from "../../components/BoardsSection";
 import { applyPreferences, fetchProducts } from "../../lib/fetchProducts";
+import Toast from "../../components/Toast";
 import { loadSavedIds, saveSavedIds, loadStyleDNA } from "../../lib/storage";
 import { loadBoards } from "../../lib/dna";
 
@@ -14,6 +15,7 @@ export default function EditPage() {
   const [savedIds, setSavedIds] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [boards, setBoards] = useState([]);
+  const [toast, setToast] = useState({ visible: false, message: "" });
   const [dna, setDNA] = useState({
     stores: [], brands: [], vibes: [], colors: [], sizes: [],
     fit: "", primaryStyle: null, secondaryStyle: null,
@@ -42,10 +44,16 @@ export default function EditPage() {
     [products, dna]
   );
 
-  const toggleSave = (id) =>
-    setSavedIds((prev) =>
-      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
-    );
+  const showToast = (msg) => {
+    setToast({ visible: true, message: msg });
+    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2400);
+  };
+
+  const toggleSave = (id) => {
+    const isAdding = !savedIds.includes(id);
+    setSavedIds((prev) => isAdding ? [...prev, id] : prev.filter((v) => v !== id));
+    if (isAdding) showToast("Saved to your edit ♥");
+  };
 
   return (
     <main>
@@ -83,7 +91,10 @@ export default function EditPage() {
         onToggleSave={toggleSave}
         onClose={() => setSelectedProduct(null)}
         dna={dna}
+        onBoardsChange={setBoards}
       />
+
+      <Toast message={toast.message} visible={toast.visible} />
     </main>
   );
 }
