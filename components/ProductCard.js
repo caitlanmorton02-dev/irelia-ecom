@@ -45,7 +45,9 @@ export default function ProductCard({ product, isSaved, onToggleSave, onOpenPane
           <strong style={{ fontSize: 12 }}>{product.price}</strong>
         </div>
         <div style={{ fontSize: 13 }}>{product.title}</div>
-        <div style={{ fontSize: 11, color: "var(--muted)" }}>{product.retailer}</div>
+        {product.retailer && product.retailer !== product.brand && (
+          <div style={{ fontSize: 11, color: "var(--muted)" }}>{product.retailer}</div>
+        )}
         <a
           href={product.affiliateUrl || product.productUrl}
           target="_blank"
