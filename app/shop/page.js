@@ -7,7 +7,8 @@ import ProductGrid from "../../components/ProductGrid";
 import ProductPanel from "../../components/ProductPanel";
 import { SkeletonGrid } from "../../components/SkeletonCard";
 import Toast from "../../components/Toast";
-import { applyPreferences, fetchProducts, getUniqueValues, parsePrice } from "../../lib/fetchProducts";
+import { fetchProducts, getUniqueValues, parsePrice } from "../../lib/fetchProducts";
+import { processProducts } from "../../lib/processProducts";
 import { loadStyleDNA, loadSavedIds, saveSavedIds } from "../../lib/storage";
 import { loadAuralisDNA, mergeWithAuralisDNA } from "../../lib/dna";
 
@@ -72,21 +73,16 @@ export default function ShopPage() {
     };
   }, [dna, removedDNAChips]);
 
-  const filteredProducts = useMemo(() => {
-    let result = applyPreferences(products, effectiveDNA);
-    if (queryCategory && NAV_CATEGORY_MAP[queryCategory]) {
-      result = result.filter((p) => NAV_CATEGORY_MAP[queryCategory].includes(p.category));
-    }
-    if (filters.category) result = result.filter((p) => p.category === filters.category);
-    if (filters.color) result = result.filter((p) => p.color === filters.color);
-    if (filters.brand) result = result.filter((p) => p.brand === filters.brand);
-    if (filters.retailer) result = result.filter((p) => p.retailer === filters.retailer);
-    if (filters.maxPrice) result = result.filter((p) => parsePrice(p.price) <= Number(filters.maxPrice));
-
-    if (sort === "price-low") result = [...result].sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
-    if (sort === "price-high") result = [...result].sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
-    return result;
-  }, [filters, effectiveDNA, products, queryCategory, sort]);
+  const filteredProducts = useMemo(
+    () =>
+      processProducts(products, effectiveDNA, {
+        filters,
+        sort,
+        navCategory: queryCategory,
+        navCategoryMap: NAV_CATEGORY_MAP,
+      }),
+    [filters, effectiveDNA, products, queryCategory, sort]
+  );
 
   const visibleProducts = filteredProducts.slice(0, page * PAGE_SIZE);
   const hasMore = visibleProducts.length < filteredProducts.length;
