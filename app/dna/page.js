@@ -26,6 +26,7 @@ import { fetchProducts } from "../../lib/fetchProducts";
 import { processProducts } from "../../lib/processProducts";
 import { loadStyleDNA } from "../../lib/storage";
 import { useSaved } from "../../lib/useSaved";
+import { getSavedProducts } from "../../lib/saveProduct";
 
 // ─── Step 1: Style vibe image grid ───────────────────────────────────────────
 
@@ -835,7 +836,7 @@ export default function DNAPage() {
   const [answers, setAnswers] = useState(EMPTY_ANSWERS);
   const [computedDNA, setComputedDNA] = useState(null);
   const [toast, setToast] = useState(false);
-  const savedCount = typeof window !== "undefined" ? loadSavedIds().length : 0;
+  const savedCount = typeof window !== "undefined" ? getSavedProducts().length : 0;
 
   // ── CRITICAL FIX: Load existing DNA on mount — skip quiz if already done ─────
   useEffect(() => {

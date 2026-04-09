@@ -13,7 +13,8 @@ import {
   STYLE_TYPES,
   STYLE_DESCRIPTIONS,
 } from "../../lib/styleDNA";
-import { saveStyleDNA, loadSavedIds } from "../../lib/storage";
+import { saveStyleDNA } from "../../lib/storage";
+import { getSavedProducts } from "../../lib/saveProduct";
 
 // ─── Quiz data ────────────────────────────────────────────────────────────────
 
@@ -517,7 +518,7 @@ export default function QuizPage() {
   // Live score preview (computed on step 5)
   const [preview, setPreview] = useState(null);
 
-  const savedCount = typeof window !== "undefined" ? loadSavedIds().length : 0;
+  const savedCount = typeof window !== "undefined" ? getSavedProducts().length : 0;
 
   const toggleItem = (setter) => (value) => {
     setter((prev) =>

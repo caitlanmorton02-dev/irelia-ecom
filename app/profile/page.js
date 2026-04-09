@@ -9,9 +9,9 @@ import StyleDNACard from "../../components/StyleDNACard";
 import {
   loadStyleDNA,
   saveStyleDNA,
-  loadSavedIds,
   loadRecentlyViewed,
 } from "../../lib/storage";
+import { getSavedProducts } from "../../lib/saveProduct";
 import { loadAuralisDNA, mergeWithAuralisDNA } from "../../lib/dna";
 import { AESTHETIC_BOARDS } from "../../lib/styleDNA";
 
@@ -247,7 +247,7 @@ export default function ProfilePage() {
     const auralis = loadAuralisDNA();
     setDNA(stored);
     setAuralisDNA(auralis);
-    setSavedCount(loadSavedIds().length);
+    setSavedCount(getSavedProducts().length);
     setRecentCount(loadRecentlyViewed().length);
   }, []);
 
